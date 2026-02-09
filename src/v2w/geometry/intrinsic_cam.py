@@ -12,7 +12,7 @@
 
 import torch
 from pathlib import Path
-from ..config.loader import load_config
+from v2w.config.loader import load_config
 
 
 def compute_int_cam_mat() -> torch.Tensor:

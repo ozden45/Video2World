@@ -12,7 +12,7 @@ from pathlib import Path
 import yaml
 import os
 from dataclasses import asdict
-from .types import Config
+from v2w.config.types import Config
 
 
 #=================================

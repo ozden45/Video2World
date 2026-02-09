@@ -12,7 +12,7 @@
 
 
 import torch
-from .points import SFMPoints, CamPoints, RayPoints, ImagePoints
+from v2w.geometry.points import SFMPoints, CamPoints, RayPoints, ImagePoints
 
 
 
