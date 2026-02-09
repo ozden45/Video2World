@@ -1,44 +1,102 @@
+# =========================================================
 # Python
+# =========================================================
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+*.so
+*.egg-info/
+build/
+dist/
+.eggs/
+pip-wheel-metadata/
 
-# Virtual env
+# virtual environments
 .venv/
 venv/
 env/
+ENV/
 
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# =========================================================
 # Jupyter
+# =========================================================
 .ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
 
-# Logs
-*.log
+# Optional: ignore large experimental notebooks outputs
+*.nbconvert.ipynb
 
-# OS
+# =========================================================
+# IDE / Editor
+# =========================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================================================
+# OS junk
+# =========================================================
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
-.idea/
-
-# Data (important for ML)
+# =========================================================
+# ML / Data (IMPORTANT for your project)
+# =========================================================
 data/
-datasets/
+experiments/
 outputs/
+logs/
 checkpoints/
-models/
-
-# Secrets
-.env
-
-# Build
-dist/
-build/
-
-# Large files
-*.zip
-*.tar
+*.ckpt
 *.pt
 *.pth
+*.onnx
+*.engine
+*.npy
+*.npz
+
+# If you later download datasets
+datasets/
+cache/
+
+# =========================================================
+# CUDA / C++ build artifacts
+# =========================================================
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.dylib
+*.out
+
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
+
+# torch extensions build
+**/build/
+**/*.so
+
+# =========================================================
+# Packaging
+# =========================================================
+*.egg
+*.whl
+
+# =========================================================
+# Temporary
+# =========================================================
+tmp/
+temp/
+*.log

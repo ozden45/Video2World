@@ -5,7 +5,7 @@
 #       This script includes functions used in the calculation 
 #       of spherical harmonics color.
 #   
-#   Author: Özden Özel
+#   Author: ï¿½zden ï¿½zel
 #   Created: 2026-01-31
 #
 # --------------------------------------------------------------
@@ -42,7 +42,7 @@ def sh_color_channel(view: torch.Tensor, c_lm: torch.Tensor, sgd_scale: float = 
         sh(v,2,-2), sh(v,2,-1), sh(v,2,0), sh(v,2,1), sh(v,2,2)
         ])
     C = (c_lm * Y_lm).sum()
-    C = torch.sigmoid(C/sgd_scale) * 255
+    C = torch.sigmoid(C / sgd_scale) * 255
 
     return int(C)
     
