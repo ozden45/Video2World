@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Data (important for ML)
+data/
+datasets/
+outputs/
+checkpoints/
+models/
+
+# Secrets
+.env
+
+# Build
+dist/
+build/
+
+# Large files
+*.zip
+*.tar
+*.pt
+*.pth
