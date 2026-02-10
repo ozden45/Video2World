@@ -1,10 +1,38 @@
-import torch
-import pandas as pd
 from pathlib import Path
-from typing import Tuple
-from v2w.config.loader import load_config
+import cv2 as cv
+import torch
+import yaml
+import numpy as np
+from v2w.utils.misc import if_path_exists
 
 
+def load_image(path: str | Path) -> torch.Tensor:
+    if if_path_exists(path):
+        raise FileNotFoundError(f"The path {path} is not found")
+    
+    frame = cv.imread(path)
+    frame = torch.Tensor(frame)
+    
+    return frame
+
+
+def load_yaml(path: str | Path) -> dict:
+    if if_path_exists(path):
+        raise FileNotFoundError(f"The path {path} is not found")
+    
+    with open(path) as f:
+        return yaml.safe_load(f)
+
+
+
+def load_npy(path: str | Path) -> np.array:
+    if if_path_exists(path):
+        raise FileNotFoundError(f"The path {path} is not found")
+    
+    depth = np.load(path)
+    depth = torch.Tensor(depth)
+    
+    
 def read_ext_cam_data() -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Docstring for read_ext_cam_data
@@ -14,7 +42,6 @@ def read_ext_cam_data() -> Tuple[torch.Tensor, torch.Tensor]:
     """
     
     # Read cam config file
-    path = Path("../../../configs/cam.yaml")
     cam_cfg = load_config()
     data_path = Path(cam_cfg.extrinsic.csv_data_path)
     
@@ -40,5 +67,3 @@ def read_ext_cam_data() -> Tuple[torch.Tensor, torch.Tensor]:
         W = torch.cat([W, W_i], dim=0)
         
     return ts, W
-        
-    
