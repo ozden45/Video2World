@@ -36,10 +36,6 @@ class BaseConfig:
     def from_dict(cls: Type[T], d: dict) -> T:
         return _convert(cls, d)
     
-    @property
-    def kwargs(self) -> :
-        
-
 
 def _convert(cls, d):
     if not is_dataclass(cls):

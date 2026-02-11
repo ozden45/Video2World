@@ -1,9 +1,7 @@
 import pytest
-import numpy as np
-import torch
 from pathlib import Path
 
-
+"""
 @pytest.fixture(scope="session")
 def fixtures_dir():
     return Path(__file__).parent / "fixtures"
@@ -27,3 +25,34 @@ def device():
 @pytest.fixture
 def random_points():
     return torch.randn(100, 3)
+"""
+
+
+
+#====================================================
+# Config test fixtures
+#====================================================
+
+@pytest.fixture
+def configs_path():
+    return Path(__file__).resolve().parents[2] / "configs"
+
+@pytest.fixture
+def cam_config_path(configs_path):
+    return configs_path / "cam.yaml"
+
+@pytest.fixture
+def dataset_config_path(configs_path):
+    return configs_path / "dataset.yaml"
+
+@pytest.fixture
+def default_config_path(configs_path):
+    return configs_path / "default.yaml"
+
+@pytest.fixture
+def model_config_path(configs_path):
+    return configs_path / "model.yaml"
+
+@pytest.fixture
+def train_config_path(configs_path):
+    return configs_path / "train.yaml"
