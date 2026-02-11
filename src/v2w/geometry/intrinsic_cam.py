@@ -1,21 +1,9 @@
-# --------------------------------------------------------------
-#   intrinsic_cam.py
-#
-#   Description:
-#
-#   
-#   Author: Ozden Ozel
-#   Created: 2026-02-08
-#
-# --------------------------------------------------------------
-
-
 import torch
 from pathlib import Path
 from v2w.config.loader import load_config
 
 
-def compute_int_cam_mat() -> torch.Tensor:
+def read_int_cam_mat() -> torch.Tensor:
     """
     Docstring for compute_int_cam_mat
     

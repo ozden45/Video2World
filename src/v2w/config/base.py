@@ -35,6 +35,10 @@ class BaseConfig:
     @classmethod
     def from_dict(cls: Type[T], d: dict) -> T:
         return _convert(cls, d)
+    
+    @property
+    def kwargs(self) -> :
+        
 
 
 def _convert(cls, d):

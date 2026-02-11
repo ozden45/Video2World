@@ -15,8 +15,8 @@ def read_ext_cam_data() -> Tuple[torch.Tensor, torch.Tensor]:
     
     # Read cam config file
     path = Path("../../../configs/cam.yaml")
-    cam_cfg = load_config()
-    data_path = Path(cam_cfg.extrinsic.csv_data_path)
+    cfg = load_config(path)
+    data_path = Path(cfg.camera.extrinsic.csv_data_path)
     
     # Check the data path exists and is correct
     if not data_path.exists():

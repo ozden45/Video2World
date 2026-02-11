@@ -9,8 +9,7 @@
 # --------------------------------------------------------------
 
 from dataclasses import dataclass
-from .base import BaseConfig
-
+from v2w.config.base import BaseConfig
 
 #----------------------------------
 # Model configs
