@@ -1,5 +1,6 @@
 import torch
-    
+from typing import Tuple
+
 
 def quat_to_rot_mat(q: torch.Tensor | Tuple) -> torch.Tensor:
     """

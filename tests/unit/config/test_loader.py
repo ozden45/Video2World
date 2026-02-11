@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def test_load_config(cam_cfg_path):
-    true_path = Path("/home/ozden/repos/Video2World/configs/cam.yaml")
+    true_path = Path(__file__).resolve().parents[3] / "configs/cam.yaml"
     assert true_path == cam_cfg_path
     
     cfg = load_config(cam_cfg_path)

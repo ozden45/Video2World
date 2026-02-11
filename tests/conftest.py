@@ -56,3 +56,24 @@ def model_cfg_path(cfgs_root_dir):
 @pytest.fixture
 def train_cfg_path(cfgs_root_dir):
     return cfgs_root_dir / "train.yaml"
+
+
+
+#====================================================
+# Geometry test fixtures
+#====================================================
+
+
+@pytest.fixture
+def dataset_root_dir():
+    return Path(__file__).resolve().parents[1] / "src/v2w/datasets"
+
+
+@pytest.fixture
+def tum_dataset_ext_data_path(dataset_root_dir):
+    return dataset_root_dir / "tum_visual_inertial_dataset"
+
+
+
+
+
