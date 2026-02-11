@@ -1,20 +1,13 @@
-﻿# =========================================
-# Intrinsic camera parameters
-# =========================================
+﻿camera:
 
-intrinsic:
-  f_mm: 2
-  sensor_width_mm: 6.784
-  sensor_height_mm: 5.427
-  width_px: 1200
-  height_px: 1200
+  intrinsic:
+    f_mm: 2
+    sensor_width_mm: 6.784
+    sensor_height_mm: 5.427
+    width_px: 1200
+    height_px: 1200
 
-
-# =========================================
-# Extrinsic camera parameters
-# =========================================
-
-extrinsic:
-  csv_data_path: "/home/ozden/repos/Video2World/src/datasets/dataset-corridor4_512_16/mav0/mocap0/data.csv"
+  extrinsic:
+    csv_data_path: "/home/ozden/repos/Video2World/src/datasets/dataset-corridor4_512_16/mav0/mocap0/data.csv"
   
 

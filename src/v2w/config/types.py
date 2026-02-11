@@ -74,9 +74,9 @@ class CamConfig(BaseConfig):
 
 @dataclass
 class Config(BaseConfig):
-    training: TrainConfig
-    model: ModelConfig
-    dataset: DatasetConfig
+    #training: TrainConfig
+    #model: ModelConfig
+    #dataset: DatasetConfig
     camera: CamConfig
     
 

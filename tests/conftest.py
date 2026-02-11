@@ -34,25 +34,25 @@ def random_points():
 #====================================================
 
 @pytest.fixture
-def configs_path():
-    return Path(__file__).resolve().parents[2] / "configs"
+def cfgs_root_dir():
+    return Path(__file__).resolve().parents[1] / "configs"
 
 @pytest.fixture
-def cam_config_path(configs_path):
-    return configs_path / "cam.yaml"
+def cam_cfg_path(cfgs_root_dir):
+    return cfgs_root_dir / "cam.yaml"
 
 @pytest.fixture
-def dataset_config_path(configs_path):
-    return configs_path / "dataset.yaml"
+def dataset_cfg_path(cfgs_root_dir):
+    return cfgs_root_dir / "dataset.yaml"
 
 @pytest.fixture
-def default_config_path(configs_path):
-    return configs_path / "default.yaml"
+def default_cfg_path(cfgs_root_dir):
+    return cfgs_root_dir / "default.yaml"
 
 @pytest.fixture
-def model_config_path(configs_path):
-    return configs_path / "model.yaml"
+def model_cfg_path(cfgs_root_dir):
+    return cfgs_root_dir / "model.yaml"
 
 @pytest.fixture
-def train_config_path(configs_path):
-    return configs_path / "train.yaml"
+def train_cfg_path(cfgs_root_dir):
+    return cfgs_root_dir / "train.yaml"

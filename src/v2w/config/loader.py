@@ -21,7 +21,7 @@ def load_config(path: str | Path) -> Config:
     """Load single yaml file."""
     
     # Check that path exists
-    if if_path_exists(path):
+    if not if_path_exists(path):
         raise FileNotFoundError(f"The path {path} is not found")
         
     raw = load_yaml(path)
@@ -34,7 +34,7 @@ def load_many_config(paths: list[str | Path]) -> Config:
 
     for path in paths:
         # Check that path exists
-        if if_path_exists(path):
+        if not if_path_exists(path):
             raise FileNotFoundError(f"The path {path} is not found")
         
         merged = _deep_merge(merged, _read_yaml(p))
@@ -46,7 +46,7 @@ def save_config(cfg: Config, path: str | Path):
     """Save config to yaml (for experiment reproducibility)."""
     
     # Check that path exists
-    if if_path_exists(path):
+    if not if_path_exists(path):
         raise FileNotFoundError(f"The path {path} is not found")
     
     with open(path, "w") as f:
