@@ -31,6 +31,7 @@ class Point:
     alpha: torch.Tensor        # Opacity
 
 
+@dataclass
 class Points:
     def __init__(self):
         self.coords = torch.tensor([])
@@ -39,7 +40,7 @@ class Points:
         self.alphas = torch.tensor([])
         self.num_points = 0
         
-        self.bounds = torch.full(size=(3, 2), fill_value=None)
+        self.bounds = torch.full(size=(3, 2), fill_value=1j)
         
     def __len__(self):
         return self.num_points
@@ -56,27 +57,34 @@ class Points:
         match other:
             case Point():
                 # Update point parameters
-                self.coords = torch.cat([self.coords, other.coords], dim=0)
-                self.covariances = torch.cat([self.covariances, other.covariance], dim=0)
-                self.colors = torch.cat([self.colors, other.color], dim=0)
-                self.alphas = torch.cat([self.alphas, other.alpha], dim=0)
+                self.coords = torch.cat([self.coords, other.coords.unsqueeze(0)], dim=0)
+                self.covariances = torch.cat([self.covariances, other.covariance.unsqueeze(0)], dim=0)
+                self.colors = torch.cat([self.colors, other.color.unsqueeze(0)], dim=0)
+                self.alphas = torch.cat([self.alphas, other.alpha.unsqueeze(0)], dim=0)
                 self.num_points += 1
                 
                 # Update boundary
-                if not self.bounds[0, 0] or self.bounds[0, 0] > other.coords[0]: 
+                if torch.is_complex(self.bounds[0, 0]) or self.bounds[0, 0] > other.coords[0]: 
                     self.bounds[0, 0] = other.coords[0]
-                if not self.bounds.get[0, 1] or self.bounds[0, 1] < other.coords[0]: 
+                if torch.is_complex(self.bounds[0, 1]) or self.bounds[0, 1] < other.coords[0]: 
                     self.bounds[0, 1] = other.coords[0]
                     
-                if not self.bounds[1, 0] or self.bounds[1, 0] > other.coords[1]: 
+                if torch.is_complex(self.bounds[1, 0]) or self.bounds[1, 0] > other.coords[1]: 
                     self.bounds[1, 0] = other.coords[1]
-                if not self.bounds[1, 1] or self.bounds[1, 1] < other.coords[1]: 
+                if torch.is_complex(self.bounds[1, 1]) or self.bounds[1, 1] < other.coords[1]: 
                     self.bounds[1, 1] = other.coords[1]
                 
-                if not self.bounds[2, 0] or self.bounds[2, 0] > other.coords[2]: 
+                if torch.is_complex(self.bounds[2, 0]) or self.bounds[2, 0] > other.coords[2]: 
                     self.bounds[2, 0] = other.coords[2]
-                if not self.bounds[2, 1] or self.bounds[2, 1] < other.coords[2]: 
+                if torch.is_complex(self.bounds[2, 1]) or self.bounds[2, 1] < other.coords[2]: 
                     self.bounds[2, 1] = other.coords[2]
+                    
+                # Rearrange dimensions for the first time
+                #if self.num_points == 1:
+                #    self.coords = self.coords.unsqueeze(0)
+                #    self.covariances = self.covariances.unsqueeze(0)
+                #    self.colors = self.colors.unsqueeze(0)
+                #    #self.alphas = self.alphas.unsqueeze(0)
                 
             case Points():
                 # Update point parameters
@@ -90,19 +98,19 @@ class Points:
                 min_coords = torch.min(self.coords, dim=1)
                 max_coords = torch.max(self.coords, dim=1)
                 
-                if not self.bounds[0, 0] or self.bounds[0, 0] > min_coords[0]: 
+                if torch.is_complex(self.bounds[0, 0]) or self.bounds[0, 0] > min_coords[0]: 
                     self.bounds[0, 0] = min_coords[0]
-                if not self.bounds.get[0, 1] or self.bounds[0, 1] < other.coords[0]: 
+                if torch.is_complex(self.bounds[0, 1]) or self.bounds[0, 1] < other.coords[0]: 
                     self.bounds[0, 1] = max_coords[0]
                     
-                if not self.bounds[1, 0] or self.bounds[1, 0] > min_coords[1]: 
+                if torch.is_complex(self.bounds[1, 0]) or self.bounds[1, 0] > min_coords[1]: 
                     self.bounds[1, 0] = min_coords[1]
-                if not self.bounds[1, 1] or self.bounds[1, 1] < other.coords[1]: 
+                if torch.is_complex(self.bounds[1, 1]) or self.bounds[1, 1] < other.coords[1]: 
                     self.bounds[1, 1] = max_coords[1]
                 
-                if not self.bounds[2, 0] or self.bounds[2, 0] > min_coords[2]: 
+                if torch.is_complex(self.bounds[2, 0]) or self.bounds[2, 0] > min_coords[2]: 
                     self.bounds[2, 0] = min_coords[2]
-                if not self.bounds[2, 1] or self.bounds[2, 1] < other.coords[2]: 
+                if torch.is_complex(self.bounds[2, 1]) or self.bounds[2, 1] < other.coords[2]: 
                     self.bounds[2, 1] = max_coords[2]
                 
             case _:
@@ -111,6 +119,7 @@ class Points:
         return self    
     
 
+@dataclass
 class PointCloud:
     def __init__(self, points: Points, bounds: torch.Tensor, res: torch.Tensor):
         if bounds.shape != (3, 2):
@@ -135,13 +144,13 @@ class PointCloud:
         self.indices = np.array([])
         self._append(points)
         
-    def __getitem__(self, x_idx: int, y_idx: int, z_idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        return (
-            self.coords[x_idx, y_idx, z_idx, :, :], 
-            self.covariances[x_idx, y_idx, z_idx, :, :], 
-            self.colors[x_idx, y_idx, z_idx, :, :], 
-            self.alphas[x_idx, y_idx, z_idx, :]
-            )
+    def __getitem__(self, x_idx: int, y_idx: int, z_idx: int) -> Point:
+        return Point(
+            coords=self.coords[x_idx, y_idx, z_idx, :, :], 
+            covariance=self.covariances[x_idx, y_idx, z_idx, :, :], 
+            color=self.colors[x_idx, y_idx, z_idx, :, :], 
+            alpha=self.alphas[x_idx, y_idx, z_idx, :]
+        )
 
     def _append(self, other: Point | Points):
         match other:
