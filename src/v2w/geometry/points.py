@@ -16,7 +16,7 @@ from typing import Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
-import cv2 as cv
+from v2w.exception import ShapeError
 
 
 # --------------------------------------------------------------
@@ -38,132 +38,146 @@ class Points:
         self.colors = torch.tensor([])
         self.alphas = torch.tensor([])
         self.num_points = 0
-
+        
+        self.bounds = torch.full(size=(3, 2), fill_value=None)
+        
     def __len__(self):
         return self.num_points
+    
+    def __getitem__(self, idx: int) -> Point:
+        return Point(
+            coords=self.coords[idx, :, :],
+            covariance=self.covariances[idx, :, :],
+            color=self.colors[idx, :, :],
+            alpha=self.alphas[idx, :]
+        )
 
     def __iadd__(self, other: Point | Points):
         match other:
             case Point():
+                # Update point parameters
                 self.coords = torch.cat([self.coords, other.coords], dim=0)
                 self.covariances = torch.cat([self.covariances, other.covariance], dim=0)
                 self.colors = torch.cat([self.colors, other.color], dim=0)
                 self.alphas = torch.cat([self.alphas, other.alpha], dim=0)
                 self.num_points += 1
+                
+                # Update boundary
+                if not self.bounds[0, 0] or self.bounds[0, 0] > other.coords[0]: 
+                    self.bounds[0, 0] = other.coords[0]
+                if not self.bounds.get[0, 1] or self.bounds[0, 1] < other.coords[0]: 
+                    self.bounds[0, 1] = other.coords[0]
+                    
+                if not self.bounds[1, 0] or self.bounds[1, 0] > other.coords[1]: 
+                    self.bounds[1, 0] = other.coords[1]
+                if not self.bounds[1, 1] or self.bounds[1, 1] < other.coords[1]: 
+                    self.bounds[1, 1] = other.coords[1]
+                
+                if not self.bounds[2, 0] or self.bounds[2, 0] > other.coords[2]: 
+                    self.bounds[2, 0] = other.coords[2]
+                if not self.bounds[2, 1] or self.bounds[2, 1] < other.coords[2]: 
+                    self.bounds[2, 1] = other.coords[2]
+                
             case Points():
+                # Update point parameters
                 self.coords = torch.cat([self.coords, other.coords], dim=0)
                 self.covariances = torch.cat([self.covariances, other.covariances], dim=0)
                 self.colors = torch.cat([self.colors, other.colors], dim=0)
                 self.alphas = torch.cat([self.alphas, other.alphas], dim=0)
                 self.num_points += other.num_points
+                
+                # Update boundary
+                min_coords = torch.min(self.coords, dim=1)
+                max_coords = torch.max(self.coords, dim=1)
+                
+                if not self.bounds[0, 0] or self.bounds[0, 0] > min_coords[0]: 
+                    self.bounds[0, 0] = min_coords[0]
+                if not self.bounds.get[0, 1] or self.bounds[0, 1] < other.coords[0]: 
+                    self.bounds[0, 1] = max_coords[0]
+                    
+                if not self.bounds[1, 0] or self.bounds[1, 0] > min_coords[1]: 
+                    self.bounds[1, 0] = min_coords[1]
+                if not self.bounds[1, 1] or self.bounds[1, 1] < other.coords[1]: 
+                    self.bounds[1, 1] = max_coords[1]
+                
+                if not self.bounds[2, 0] or self.bounds[2, 0] > min_coords[2]: 
+                    self.bounds[2, 0] = min_coords[2]
+                if not self.bounds[2, 1] or self.bounds[2, 1] < other.coords[2]: 
+                    self.bounds[2, 1] = max_coords[2]
+                
             case _:
                 raise TypeError(f"Unsupported type for addition: {type(other)}")
 
         return self    
     
 
-class Volume:
-    def __init__(self, x_max: int, y_max: int, z_max: int, dx: float, dy: float, dz: float):
-        x_dim, y_dim, z_dim = int(x_max / dx), int(y_max / dy), int(z_max / dz)
-        self.data = np.full((x_dim, y_dim, z_dim), None, dtype=object)
+class PointCloud:
+    def __init__(self, points: Points, bounds: torch.Tensor, res: torch.Tensor):
+        if bounds.shape != (3, 2):
+            raise ShapeError(f"Invalid bounds shape {bounds.shape}, expecting (3, 2)")
         
+        if res.shape != (3, 1):
+            raise ShapeError(f"Invalid resolution shape {res.shape}, expecting (3, 1)")
         
-        self.indices = np.array([], dtype=torch.Tensor)
-        self.delta = (dx, dy, dz)
+        self.bounds = bounds
+        self.res = res
         
+        x_dim = int((bounds[0, 1] - bounds[0, 0]) / res[0])
+        y_dim = int((bounds[1, 1] - bounds[1, 0]) / res[1])
+        z_dim = int((bounds[2, 1] - bounds[2, 0]) / res[2])
         
-        self.coords = torch.tensor((x_dim, y_dim, z_dim), )
-        self.covariances = torch.tensor([])
-        self.colors = torch.tensor([])
-        self.alphas = torch.tensor([])
+        self.shape = torch.tensor([[x_dim], [y_dim], [z_dim]])
+        self.coords = torch.zeros((x_dim, y_dim, z_dim, 3, 1), dtype=float)
+        self.covariances = torch.zeros((x_dim, y_dim, z_dim, 3, 3), dtype=float)
+        self.colors = torch.zeros((x_dim, y_dim, z_dim, 3, 1), dtype=int)
+        self.alphas = torch.zeros((x_dim, y_dim, z_dim, 1), dtype=float)
         
+        self.indices = np.array([])
+        self._append(points)
+        
+    def __getitem__(self, x_idx: int, y_idx: int, z_idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        return (
+            self.coords[x_idx, y_idx, z_idx, :, :], 
+            self.covariances[x_idx, y_idx, z_idx, :, :], 
+            self.colors[x_idx, y_idx, z_idx, :, :], 
+            self.alphas[x_idx, y_idx, z_idx, :]
+            )
 
-    def __getitem__(self, idx: Tuple[int, int, int]) -> Point:
-        return self.data[idx]
-
-    def append(self, other: Point | Points):
+    def _append(self, other: Point | Points):
         match other:
             case Point():
                 coords = other.coords.squeeze()
-                index = (
-                    int(coords[0] / self.delta[0]),
-                    int(coords[1] / self.delta[1]),
-                    int(coords[2] / self.delta[2]),
+                x_idx, y_idx, z_idx = (
+                    int((coords[0] - self.bounds[0, 0]) / self.res[0]),
+                    int((coords[1] - self.bounds[1, 0]) / self.res[1]),
+                    int((coords[2] - self.bounds[2, 0]) / self.res[2]),
                 )
-                self.data[index] = other
-                self.indices = np.append(self.indices, index)
+                
+                self.coords[x_idx, y_idx, z_idx, :, :] = other.coords
+                self.covariances[x_idx, y_idx, z_idx, :, :] = other.covariance
+                self.colors[x_idx, y_idx, z_idx, :, :] = other.color
+                self.alphas[x_idx, y_idx, z_idx, :] = other.alpha
+                
+                self.indices = np.append(self.indices, (x_idx, y_idx, z_idx))
 
             case Points():
-                for point in other.data:
-                    coords = point.coords.squeeze()
-                    index = (
-                        int(coords[0] / self.delta[0]),
-                        int(coords[1] / self.delta[1]),
-                        int(coords[2] / self.delta[2]),
+                for i in range(other.num_points):
+                    pts = other[i]
+                    x_idx, y_idx, z_idx = (
+                        int((pts.coords[0] - self.bounds[0, 0]) / self.res[0]),
+                        int((pts.coords[1] - self.bounds[1, 0]) / self.res[1]),
+                        int((pts.coords[2] - self.bounds[2, 0]) / self.res[2]),
                     )
-                    self.data[index] = point
-                    self.indices = np.append(self.indices, index)
-
+                    
+                    self.coords[x_idx, y_idx, z_idx, :, :] = pts.coords
+                    self.covariances[x_idx, y_idx, z_idx, :, :] = pts.covariance
+                    self.colors[x_idx, y_idx, z_idx, :, :] = pts.color
+                    self.alphas[x_idx, y_idx, z_idx, :] = pts.alpha
+                    
+                    self.indices = np.append(self.indices, (x_idx, y_idx, z_idx))
+                    
             case _:
                 raise TypeError(f"Unsupported type for addition: {type(other)}")
-            
-    
-    @property
-    def coords(self) -> torch.Tensor:
-        coords = []
-        for index in self.indices:
-            point = self.data[index]
-            if point is None:
-                raise ValueError(f"No point found at index {index}")
-            coords.append(point.coords.squeeze())
-
-        return torch.stack(coords)
-
-    @property
-    def covariances(self) -> torch.Tensor:
-        covariances = []
-        for index in self.indices:
-            point = self.data[index]
-            if point is None:
-                raise ValueError(f"No point found at index {index}")
-            covariances.append(point.covariance)
-
-        return torch.stack(covariances)
-
-    @property
-    def colors(self) -> torch.Tensor:
-        colors = []
-        for index in self.indices:
-            point = self.data[index]
-            if point is None:
-                raise ValueError(f"No point found at index {index}")
-            colors.append(point.color)
-
-        return torch.stack(colors)
-    
-    @property
-    def alphas(self) -> torch.Tensor:
-        alphas = []
-        for index in self.indices:
-            point = self.data[index]
-            if point is None:
-                raise ValueError(f"No point found at index {index}")
-            alphas.append(point.alpha)
-
-        return torch.stack(alphas)
-
-    @property
-    def rgba(self) -> torch.Tensor:
-        rgb = []
-        a = []
-        for index in self.indices:
-            point = self.data[index]
-            if point is None:
-                raise ValueError(f"No point found at index {index}")
-            rgb.append(point.color)
-            a.append(point.alpha)
-
-        return torch.cat([rgb, a.unsqueeze(-1)], dim=-1)
 
     def show(self):
         fig = plt.figure()
@@ -203,7 +217,7 @@ class SFMPoints(Points):
         plt.show()
 
     
-class SFMPointVolume(Volume):
+class SFMPointCloud(PointCloud):
     pass
 
 

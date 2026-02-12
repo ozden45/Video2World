@@ -2,7 +2,6 @@ import torch
 import pandas as pd
 from pathlib import Path
 from typing import Tuple
-from v2w.config.loader import load_config
 from v2w.utils.misc import if_path_exists
 from v2w.utils.math import quat_to_rot_mat
 
@@ -16,8 +15,6 @@ def read_ext_cam_data(path: str | Path) -> Tuple[torch.Tensor, torch.Tensor]:
     :return: Description
     :rtype: Tuple[Tensor, Tensor]
     """
-    
-    
     
     # Check the data path exists
     if not if_path_exists(path):

@@ -1,14 +1,5 @@
 """
 Docstring for tests.unit.geometry.test_extrinsic_cam
-
-@pytest.fixture
-def dataset_root_dir():
-    return Path(__file__).resolve().parents[1] / "src/v2w/datasets"
-
-
-@pytest.fixture
-def tum_dataset_ext_data_path(dataset_root_dir):
-    return dataset_root_dir / "tum_visual_inertial_dataset"
 """
 
 from v2w.geometry.extrinsic_cam import read_ext_cam_data
