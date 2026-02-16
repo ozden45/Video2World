@@ -107,7 +107,22 @@ def pts2():
 
 # |---> Point cloud test fixtures
 
+@pytest.fixture
+def bounds():
+    return torch.tensor(
+        [[-10, 10], [-10, 10], [-10, 10]],
+        device=torch.device("cuda")
+        )
 
+@pytest.fixture
+def res():
+    return torch.tensor(
+        [0.1, 0.1, 0.1],
+        device=torch.device("cuda")
+        )
 
+@pytest.fixture
+def pts_cloud(bounds, res):
+    return PointCloud(bounds, res)
 
 

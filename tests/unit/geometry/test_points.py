@@ -42,7 +42,14 @@ class TestPoints:
 class TestPointCloud:
     def test_point_cloud_init(self, bounds, res):
         pts_cloud = PointCloud(bounds, res, "cuda")
+        
+        assert pts_cloud.get_filled_voxels() == None
 
+    def test_point_cloud_bound(self, pts_cloud, bounds, res):
+        dims = ((bounds[:, 1] - bounds[:, 0]) / res).floor().to(torch.long)
+        print(f"dims: {dims}, pts_cloud.shape: {pts_cloud.shape}")
+        
+        assert pts_cloud.shape == dims
 
 
 

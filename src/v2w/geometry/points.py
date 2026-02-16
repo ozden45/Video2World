@@ -64,12 +64,7 @@ class Points:
         return self
     
 
-@dataclass(slots=True)
 class PointCloud:
-    bounds: torch.Tensor
-    res: torch.Tensor
-    device: torch.device
-    
     def __init__(
         self,
         bounds: torch.Tensor,
