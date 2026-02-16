@@ -48,7 +48,7 @@ def tum_dataset_ext_data_path(dataset_root_dir):
     return dataset_root_dir / "tum_visual_inertial_dataset"
 
 
-# |---> Points text fixtures
+# |---> Points test fixtures
 
 @pytest.fixture
 def p1():
@@ -103,4 +103,11 @@ def pts2():
             ]),
         alphas = torch.tensor([0.3, 0.4])
     )
+
+
+# |---> Point cloud test fixtures
+
+
+
+
 

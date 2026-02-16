@@ -40,7 +40,8 @@ class TestPoints:
         
 
 class TestPointCloud:
-    pass
+    def test_point_cloud_init(self, bounds, res):
+        pts_cloud = PointCloud(bounds, res, "cuda")
 
 
 
