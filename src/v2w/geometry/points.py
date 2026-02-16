@@ -12,7 +12,7 @@
 
 from __future__ import annotations
 import torch
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, InitVar
 from typing import Union
 import matplotlib.pyplot as plt
 from v2w.exception import ShapeError
@@ -28,6 +28,28 @@ class Point:
     covariance: torch.Tensor   # Covariance matrix
     color: torch.Tensor        # Color information
     alpha: torch.Tensor        # Opacity
+    
+    device: InitVar[torch.device | str | None] = None
+
+    def __post_init__(self, device):
+        # Resolve device
+        if device is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            device = torch.device(device)
+            
+        self.coords = self.coords.to(dtype=torch.float32, device=device)
+        self.covariance = self.covariance.to(dtype=torch.float32, device=device)
+        self.color = self.color.to(dtype=torch.uint8, device=device)
+        self.alpha = self.alpha.to(dtype=torch.float32, device=device)
+
+    def __eq__(self, other: Point):
+        return (
+            torch.equal(self.coords, other.coords) and
+            torch.equal(self.covariance, other.covariance) and
+            torch.equal(self.color, other.color) and
+            torch.equal(self.alpha, other.alpha)
+        )
 
 
 @dataclass
@@ -36,6 +58,28 @@ class Points:
     covariances: torch.Tensor = field(default_factory=lambda: torch.empty((0, 3, 3)))
     colors: torch.Tensor = field(default_factory=lambda: torch.empty((0, 3)))
     alphas: torch.Tensor = field(default_factory=lambda: torch.empty((0)))
+
+    device: InitVar[torch.device | str | None] = None
+
+    def __post_init__(self, device):
+        # Resolve device
+        if device is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            device = torch.device(device)
+            
+        self.coords = self.coords.to(dtype=torch.float32, device=device)
+        self.covariances = self.covariances.to(dtype=torch.float32, device=device)
+        self.colors = self.colors.to(dtype=torch.uint8, device=device)
+        self.alphas = self.alphas.to(dtype=torch.float32, device=device)
+
+    def __eq__(self, other: Points):
+        return (
+            torch.equal(self.coords, other.coords) and
+            torch.equal(self.covariances, other.covariances) and
+            torch.equal(self.colors, other.colors) and
+            torch.equal(self.alphas, other.alphas)
+        )
 
     def __len__(self):
         return self.coords.shape[0]
@@ -53,7 +97,7 @@ class Points:
             self.coords = torch.cat([self.coords, other.coords.unsqueeze(0)], dim=0)
             self.covariances = torch.cat([self.covariances, other.covariance.unsqueeze(0)], dim=0)
             self.colors = torch.cat([self.colors, other.color.unsqueeze(0)], dim=0)
-            self.alphas = torch.cat([self.alphas, other.alpha.unsqueeze(0)], dim=0)
+            self.alphas = torch.cat([self.alphas, other.alpha], dim=0)
         elif isinstance(other, Points):
             self.coords = torch.cat([self.coords, other.coords], dim=0)
             self.covariances = torch.cat([self.covariances, other.covariances], dim=0)
@@ -69,7 +113,7 @@ class PointCloud:
         self,
         bounds: torch.Tensor,
         res: torch.Tensor,
-        device: Union[str, torch.device] = "cuda",
+        device: Union[str, torch.device] = "cuda"
     ):
         self.device = torch.device(device)
 
@@ -139,14 +183,13 @@ class PointCloud:
         colors = colors[valid_mask]
         alphas = alphas[valid_mask]
         
-        x_idx, y_idx, z_idx = indices[: 0], indices[: 1], indices[: 2]
+        x_idx, y_idx, z_idx = indices[:, 0], indices[:, 1], indices[:, 2]
         
         self.coords[x_idx, y_idx, z_idx] = coords
         self.covariances[x_idx, y_idx, z_idx] = covs
         self.colors[x_idx, y_idx, z_idx] = colors
         self.alphas[x_idx, y_idx, z_idx] = alphas
         self.indices = torch.cat([self.indices, indices], dim=0)
-
 
     def get_filled_voxels(self) -> Points:
         """
@@ -163,7 +206,6 @@ class PointCloud:
             colors=self.colors[x, y, z],
             alphas=self.alphas[x, y, z]
         )
-
 
     def show(self):
         fig = plt.figure()

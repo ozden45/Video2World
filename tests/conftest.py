@@ -72,7 +72,7 @@ def p2():
 def pts1():
     return Points(
         coords = torch.tensor([
-            [2.3, 0.1, -3], 
+            [1, 2, 3], 
             [2.3, 0.1, -3]
             ]),
         covariances = torch.tensor([
@@ -80,10 +80,10 @@ def pts1():
             [[0.5, 0.3, 0.4], [0.1, 0.1, 0.2], [0.52, 0.13, 0.41]]
             ]),
         colors = torch.tensor([
-            [40, 1, 74], 
+            [121, 10, 204], 
             [40, 1, 74]
             ]),
-        alphas = torch.tensor([0.8, 0.2])
+        alphas = torch.tensor([0.5, 0.8])
     )
 
 @pytest.fixture
