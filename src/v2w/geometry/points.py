@@ -105,6 +105,15 @@ class Points:
             self.alphas = torch.cat([self.alphas, other.alphas], dim=0)
         else:
             raise TypeError(...)
+        
+        
+        # TODO: Solve point duplications
+        
+        #self.coords = torch.unique(self.coords, dim=0, sorted=True)
+        #self.covariances = torch.unique(self.covariances, dim=0, sorted=True)
+        #self.colors = torch.unique(self.colors, dim=0, sorted=True)
+        #self.alphas = torch.unique(self.alphas, dim=0, sorted=True)
+        
         return self
     
 
@@ -125,7 +134,7 @@ class PointCloud:
         self.shape = self._compute_shape()
         self._allocate_storage()
 
-        # store occupied voxel indices (GPU tensor)
+        # Occupied voxel indices
         self.indices = torch.empty((0, 3), dtype=torch.long, device=self.device)
 
     def _validate_inputs(self, bounds: torch.Tensor, res: torch.Tensor) -> None:
@@ -184,12 +193,14 @@ class PointCloud:
         alphas = alphas[valid_mask]
         
         x_idx, y_idx, z_idx = indices[:, 0], indices[:, 1], indices[:, 2]
-        
+        #print(f"x_idx: {x_idx}, y_idx: {y_idx}, z_idx: {z_idx}")
         self.coords[x_idx, y_idx, z_idx] = coords
         self.covariances[x_idx, y_idx, z_idx] = covs
         self.colors[x_idx, y_idx, z_idx] = colors
         self.alphas[x_idx, y_idx, z_idx] = alphas
+        #print(f"self.indices.shape: {self.indices.shape}, indices.shape: {indices.shape}")
         self.indices = torch.cat([self.indices, indices], dim=0)
+        self.indices = torch.unique(self.indices, dim=0, sorted=True)
 
     def get_filled_voxels(self) -> Points:
         """
@@ -199,7 +210,8 @@ class PointCloud:
             return None
         
         x, y, z = self.indices.T
-        
+        #print(f"get_filled_voxels |--> x: {x}, y: {y}, z: {z}")
+        #print("-----------------------------------------\n\n")
         return Points(
             coords=self.coords[x, y, z],
             covariances=self.covariances[x, y, z],
