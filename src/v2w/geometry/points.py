@@ -1,14 +1,12 @@
-# --------------------------------------------------------------
-#   points.py
-#
-#   Description:
-#       This script includes point modules for each coordinate 
-#       space.
-#
-#   Author: Ozden Ozel
-#   Created: 2026-01-28
-#
-# --------------------------------------------------------------
+"""
+v2w.geometry.points
+
+This script includes point modules for each coordinate space.
+
+Author: Ozden Ozel
+Created: 2026-01-28
+"""
+
 
 from __future__ import annotations
 import torch

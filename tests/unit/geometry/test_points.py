@@ -16,7 +16,9 @@ class TestPoint:
             color = torch.tensor([121, 10, 204]),
             alpha = torch.tensor([0.5])
         )
+        
         assert p1 == p2
+        
 
 class TestPoints:
     def test_add_point(self, p1, p2):
