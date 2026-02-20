@@ -5,9 +5,9 @@ This script includes an implementation of projection
 between different space coordinates.
 """
 
-
 import torch
 from v2w.geometry.points import SFMPoints, CamPoints, RayPoints, ImagePoints
+from v2w.exception import ShapeError
 
 
 def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CamPoints:
@@ -20,8 +20,14 @@ def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CamPoints:
         cam_pts (CamPoints): The points in the camera space.
     """
     # Check the shape of W
-    if W.shape == (3,4):
-        raise ValueError(f"project_sfm_to_cam(): Invalid W shape {W.shape}, expected (3,4).")
+    if W.shape != (3, 4):
+        raise ShapeError(f"project_sfm_to_cam(): Invalid W shape {W.shape}, expected (3,4).")
+    
+    # Carry W tensor to the same device and dtype as sfm_pts
+    W = W.to(
+        dtype=sfm_pts.coords.dtype, 
+        device=sfm_pts.coords.device
+        )
     
     # Convert W to the rotation matrix (R) and translational matrix (t)
     N = sfm_pts.coords.shape[0]
@@ -31,6 +37,7 @@ def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CamPoints:
 
     # Calculate the points of the coordinates and covariances in the camera space
     cam_coords = R @ sfm_pts.coords + t
+    print(f"R.shape: {R.shape}, sfm_pts.covariances.shape: {sfm_pts.covariances.shape}, R^T.shape: {R.T.shape}")
     cam_covariances = R @ sfm_pts.covariances @ R.transpose(-2, -1)
     
     cam_pts = CamPoints()

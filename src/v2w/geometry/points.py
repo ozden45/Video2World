@@ -232,8 +232,9 @@ class PointCloud:
         
             
 
+
 # --------------------------------------------------------------
-# SFM point modules on the world coordinates
+# Point modules for each coordinate space
 # --------------------------------------------------------------
 
 class SFMPoint(Point):
@@ -259,11 +260,6 @@ class SFMPointCloud(PointCloud):
     pass
 
 
-
-# --------------------------------------------------------------
-# Point modules reflected on camera coordinates
-# --------------------------------------------------------------
-
 class CamPoint(Point):
     pass
 
@@ -272,10 +268,6 @@ class CamPoints(Points):
     pass
 
 
-# --------------------------------------------------------------
-# Point modules reflected on the ray coordinates
-# --------------------------------------------------------------
-
 class RayPoint(Point):
     pass
 
@@ -283,16 +275,13 @@ class RayPoint(Point):
 class RayPoints(Points):
     pass
 
-# --------------------------------------------------------------
-# Point modules reflected on image pixel
-# --------------------------------------------------------------
 
 class ImagePoint(Point):
     pass
 
 
 class ImagePoints(Points):
-    def __init__(self, frame: torch.Tensor, depth: torch.Tensor):
+    def load_from_frame(self, frame: torch.Tensor, depth: torch.Tensor):
         x = torch.arange(frame.shape[0])
         y = torch.arange(frame.shape[1])
         xy = torch.cartesian_prod(x, y)
