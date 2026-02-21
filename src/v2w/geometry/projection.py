@@ -30,19 +30,20 @@ def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CamPoints:
         )
     
     # Convert W to the rotation matrix (R) and translational matrix (t)
-    N = sfm_pts.coords.shape[0]
-    W = W.unsqueeze(0).repeat(N, 1, 1)
-    R = W[:, :3, :3]
-    t = W[:, :3, 3:].reshape(N, 3, 1)
+    R = W[:3, :3]
+    t = W[:3, 3:].reshape(3, 1)
 
     # Calculate the points of the coordinates and covariances in the camera space
     cam_coords = R @ sfm_pts.coords + t
-    print(f"R.shape: {R.shape}, sfm_pts.covariances.shape: {sfm_pts.covariances.shape}, R^T.shape: {R.T.shape}")
     cam_covariances = R @ sfm_pts.covariances @ R.transpose(-2, -1)
     
-    cam_pts = CamPoints()
-    cam_pts.coords = cam_coords
-    cam_pts.covariances = cam_covariances
+    # Create the CamPoints object
+    cam_pts = CamPoints(
+        coords=cam_coords,
+        covariances=cam_covariances,
+        colors=sfm_pts.colors,
+        alphas=sfm_pts.alphas
+    )
     
     return cam_pts
         
@@ -56,24 +57,27 @@ def project_cam_to_ray(cam_pts: CamPoints) -> RayPoints:
         ray_pts (RayPoints): The points in the ray space.
     """
     N = cam_pts.coords.shape[0]
-    r0 = cam_pts.coords[:, 0, 0] / cam_pts.coords[:, 2, 0]; 
-    r1 = cam_pts.coords[:, 1, 0] / cam_pts.coords[:, 2, 0]
-    r2 = torch.linalg.norm(cam_pts.coords.view(N, 3), dim=1)
-    ray_coords = torch.cat([r0, r1, r2], dim=1)
+    r0 = (cam_pts.coords[:, 0] / cam_pts.coords[:, 2]).unsqueeze(0)
+    r1 = (cam_pts.coords[:, 1] / cam_pts.coords[:, 2]).unsqueeze(0)
+    r2 = torch.linalg.norm(cam_pts.coords, dim=1).unsqueeze(0)
+    ray_coords = torch.cat([r0, r1, r2], dim=0)
     
     # Batched Jacobian (N,3,3)
     J = torch.zeros((N, 3, 3), device=cam_pts.coords.device, dtype=cam_pts.coords.dtype)
-    J[:, 0, 0] = 1.0 / cam_pts.coords[:, 2, 0]
-    J[:, 0, 2] = -cam_pts.coords[:, 0, 0] / (cam_pts.coords[:, 2, 0]**2)
-    J[:, 1, 1] = 1.0 / cam_pts.coords[:, 2, 0]
-    J[:, 1, 2] = -cam_pts.coords[:, 1, 0] / (cam_pts.coords[:, 2, 0]**2)
+    J[:, 0, 0] = 1.0 / cam_pts.coords[:, 2]
+    J[:, 0, 2] = -cam_pts.coords[:, 0] / (cam_pts.coords[:, 2]**2)
+    J[:, 1, 1] = 1.0 / cam_pts.coords[:, 2]
+    J[:, 1, 2] = -cam_pts.coords[:, 1] / (cam_pts.coords[:, 2]**2)
     J[:, 2, 2] = 1.0 / torch.linalg.norm(cam_pts.coords.view(N, 3), dim=1)
 
     ray_covariances = J @ cam_pts.covariances @ J.transpose(-2, -1)  # (N,3,3)
     
-    ray_pts = RayPoints()
-    ray_pts.coords = ray_coords
-    ray_pts.covariances = ray_covariances
+    ray_pts = RayPoints(
+        coords=ray_coords,
+        covariances=ray_covariances,
+        colors=cam_pts.colors,
+        alphas=cam_pts.alphas
+    )
     
     return ray_pts
 
@@ -87,14 +91,24 @@ def project_ray_to_img(ray_pts: RayPoints, K: torch.Tensor) -> ImagePoints:
     Returns:
         img_pts (ImagePoints): The points in the image space.
     """
+    
+    # Carry W tensor to the same device and dtype as sfm_pts
+    K = K.to(
+        dtype=ray_pts.coords.dtype, 
+        device=ray_pts.coords.device
+        )
+    
     N = ray_pts.coords.shape[0]
-    K = K.unsqueeze(0).repeat(N, 1, 1)
+    K = K.unsqueeze(0).repeat(N, 1)
     img_coords = K @ ray_pts.coords.unsqueeze(-1)
     img_covariances = ray_pts.covariances
     
-    img_pts = ImagePoints()
-    img_pts.coords = img_coords
-    img_pts.covariances = img_covariances
+    img_pts = ImagePoints(
+        coords=img_coords,
+        covariances=img_covariances,
+        colors=ray_pts.colors,
+        alphas=ray_pts.alphas
+    )
     
     return img_pts
 

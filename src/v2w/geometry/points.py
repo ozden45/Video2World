@@ -49,6 +49,9 @@ class Point:
             torch.equal(self.alpha, other.alpha)
         )
 
+    def __repr__(self):
+        return f"Point(coords={self.coords}, covariance={self.covariance}, color={self.color}, alpha={self.alpha})"
+
 
 @dataclass
 class Points:
@@ -60,7 +63,6 @@ class Points:
     device: InitVar[torch.device | str | None] = None
 
     def __post_init__(self, device):
-        # Resolve device
         if device is None:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
@@ -82,13 +84,8 @@ class Points:
     def __len__(self):
         return self.coords.shape[0]
 
-    @property
-    def bounds(self):
-        if len(self) == 0:
-            return torch.full((3, 2), float("nan"))
-        mins = self.coords.min(dim=0).values
-        maxs = self.coords.max(dim=0).values
-        return torch.stack([mins, maxs], dim=1)
+    def __repr__(self):
+        return f"Points(coords={self.coords}, covariances={self.covariances}, colors={self.colors}, alphas={self.alphas})"
 
     def __iadd__(self, other):
         if isinstance(other, Point):
@@ -103,8 +100,7 @@ class Points:
             self.alphas = torch.cat([self.alphas, other.alphas], dim=0)
         else:
             raise TypeError(...)
-        
-        
+            
         # TODO: Solve point duplications
         
         #self.coords = torch.unique(self.coords, dim=0, sorted=True)
@@ -113,6 +109,14 @@ class Points:
         #self.alphas = torch.unique(self.alphas, dim=0, sorted=True)
         
         return self
+    
+    @property
+    def bounds(self):
+        if len(self) == 0:
+            return torch.full((3, 2), float("nan"))
+        mins = self.coords.min(dim=0).values
+        maxs = self.coords.max(dim=0).values
+        return torch.stack([mins, maxs], dim=1)
     
 
 class PointCloud:
