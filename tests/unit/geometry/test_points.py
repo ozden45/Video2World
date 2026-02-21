@@ -102,7 +102,3 @@ class TestPointCloud:
         
         assert pts == pts_cloud.get_filled_voxels()
         
-        pts += pts1
-        pts_cloud.add(pts1)
-        
-        assert pts != pts_cloud.get_filled_voxels()

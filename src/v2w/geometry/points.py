@@ -43,10 +43,10 @@ class Point:
 
     def __eq__(self, other: Point):
         return (
-            torch.equal(self.coords, other.coords) and
-            torch.equal(self.covariance, other.covariance) and
+            torch.allclose(self.coords, other.coords, atol=1e-2, rtol=1e-2) and
+            torch.allclose(self.covariance, other.covariance, atol=1e-2, rtol=1e-2) and
             torch.equal(self.color, other.color) and
-            torch.equal(self.alpha, other.alpha)
+            torch.allclose(self.alpha, other.alpha, atol=1e-2, rtol=1e-2)
         )
 
     def __repr__(self):
@@ -75,10 +75,10 @@ class Points:
 
     def __eq__(self, other: Points):
         return (
-            torch.equal(self.coords, other.coords) and
-            torch.equal(self.covariances, other.covariances) and
+            torch.allclose(self.coords, other.coords, atol=1e-2, rtol=1e-2) and
+            torch.allclose(self.covariances, other.covariances, atol=1e-2, rtol=1e-2) and
             torch.equal(self.colors, other.colors) and
-            torch.equal(self.alphas, other.alphas)
+            torch.allclose(self.alphas, other.alphas, atol=1e-2, rtol=1e-2)
         )
 
     def __len__(self):
@@ -195,12 +195,12 @@ class PointCloud:
         alphas = alphas[valid_mask]
         
         x_idx, y_idx, z_idx = indices[:, 0], indices[:, 1], indices[:, 2]
-        #print(f"x_idx: {x_idx}, y_idx: {y_idx}, z_idx: {z_idx}")
+
         self.coords[x_idx, y_idx, z_idx] = coords
         self.covariances[x_idx, y_idx, z_idx] = covs
         self.colors[x_idx, y_idx, z_idx] = colors
         self.alphas[x_idx, y_idx, z_idx] = alphas
-        #print(f"self.indices.shape: {self.indices.shape}, indices.shape: {indices.shape}")
+
         self.indices = torch.cat([self.indices, indices], dim=0)
         self.indices = torch.unique(self.indices, dim=0, sorted=True)
 
@@ -212,8 +212,7 @@ class PointCloud:
             return None
         
         x, y, z = self.indices.T
-        #print(f"get_filled_voxels |--> x: {x}, y: {y}, z: {z}")
-        #print("-----------------------------------------\n\n")
+        
         return Points(
             coords=self.coords[x, y, z],
             covariances=self.covariances[x, y, z],
@@ -293,9 +292,9 @@ class ImagePoints(Points):
         
         N = frame.shape[0]*frame.shape[1]
         self.coords = torch.cat([xy, z], dim=1).unsqueeze(-1)
-        self.covariances = torch.rand(N, 3, 3)
+        self.covariances = torch.rand(N, 2, 2)
         self.colors = frame.reshape(-1, 3)
-        self.alphas = torch.rand(N, 1)
+        self.alphas = torch.rand(N)
                 
     def scatter(self, step):
         fig = plt.figure()

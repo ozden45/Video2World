@@ -34,7 +34,7 @@ def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CamPoints:
     t = W[:3, 3:].reshape(3, 1)
 
     # Calculate the points of the coordinates and covariances in the camera space
-    cam_coords = R @ sfm_pts.coords + t
+    cam_coords = (R @ sfm_pts.coords.T).T + t
     cam_covariances = R @ sfm_pts.covariances @ R.transpose(-2, -1)
     
     # Create the CamPoints object
@@ -56,21 +56,22 @@ def project_cam_to_ray(cam_pts: CamPoints) -> RayPoints:
     Returns:
         ray_pts (RayPoints): The points in the ray space.
     """
-    N = cam_pts.coords.shape[0]
-    r0 = (cam_pts.coords[:, 0] / cam_pts.coords[:, 2]).unsqueeze(0)
-    r1 = (cam_pts.coords[:, 1] / cam_pts.coords[:, 2]).unsqueeze(0)
-    r2 = torch.linalg.norm(cam_pts.coords, dim=1).unsqueeze(0)
-    ray_coords = torch.cat([r0, r1, r2], dim=0)
-    
-    # Batched Jacobian (N,3,3)
-    J = torch.zeros((N, 3, 3), device=cam_pts.coords.device, dtype=cam_pts.coords.dtype)
-    J[:, 0, 0] = 1.0 / cam_pts.coords[:, 2]
-    J[:, 0, 2] = -cam_pts.coords[:, 0] / (cam_pts.coords[:, 2]**2)
-    J[:, 1, 1] = 1.0 / cam_pts.coords[:, 2]
-    J[:, 1, 2] = -cam_pts.coords[:, 1] / (cam_pts.coords[:, 2]**2)
-    J[:, 2, 2] = 1.0 / torch.linalg.norm(cam_pts.coords.view(N, 3), dim=1)
+    X = cam_pts.coords 
+    N = X.shape[0]
 
-    ray_covariances = J @ cam_pts.covariances @ J.transpose(-2, -1)  # (N,3,3)
+    norm = torch.linalg.norm(X, dim=1, keepdim=True)
+    ray_coords = X / norm 
+
+    J = torch.zeros((N, 3, 3), device=X.device, dtype=X.dtype)
+
+    for i in range(3):
+        for j in range(3):
+            if i == j:
+                J[:, i, j] = (norm.squeeze()**2 - X[:, i]**2) / norm.squeeze()**3
+            else:
+                J[:, i, j] = -X[:, i] * X[:, j] / norm.squeeze()**3
+
+    ray_covariances = J @ cam_pts.covariances @ J.transpose(-2, -1)
     
     ray_pts = RayPoints(
         coords=ray_coords,
@@ -99,7 +100,7 @@ def project_ray_to_img(ray_pts: RayPoints, K: torch.Tensor) -> ImagePoints:
         )
     
     N = ray_pts.coords.shape[0]
-    K = K.unsqueeze(0).repeat(N, 1)
+    #K = K.unsqueeze(0).repeat(N, 1, 1)
     img_coords = K @ ray_pts.coords.unsqueeze(-1)
     img_covariances = ray_pts.covariances
     
