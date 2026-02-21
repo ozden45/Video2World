@@ -28,16 +28,23 @@ class Point:
     alpha: torch.Tensor        # Opacity
     
     device: InitVar[torch.device | str | None] = None
-
-    def __post_init__(self, device):
+    dtype: InitVar[torch.dtype | str | None] = None
+    
+    def __post_init__(self, device=None, dtype=None):
         # Resolve device
         if device is None:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
             device = torch.device(device)
             
-        self.coords = self.coords.to(dtype=torch.float32, device=device)
-        self.covariance = self.covariance.to(dtype=torch.float32, device=device)
+        # Resolve dtype
+        if dtype is None:
+            dtype = torch.float32
+        else:
+            dtype = torch.as_tensor(1, dtype=dtype).dtype
+            
+        self.coords = self.coords.to(dtype=dtype, device=device)
+        self.covariance = self.covariance.to(dtype=dtype, device=device)
         self.color = self.color.to(dtype=torch.uint8, device=device)
         self.alpha = self.alpha.to(dtype=torch.float32, device=device)
 
@@ -61,15 +68,22 @@ class Points:
     alphas: torch.Tensor = field(default_factory=lambda: torch.empty((0)))
 
     device: InitVar[torch.device | str | None] = None
+    dtype: InitVar[torch.dtype | str | None] = None
 
-    def __post_init__(self, device):
+    def __post_init__(self, device=None, dtype=None):
         if device is None:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
             device = torch.device(device)
             
-        self.coords = self.coords.to(dtype=torch.float32, device=device)
-        self.covariances = self.covariances.to(dtype=torch.float32, device=device)
+        # Resolve dtype
+        if dtype is None:
+            dtype = torch.float32
+        else:
+            dtype = torch.as_tensor(1, dtype=dtype).dtype
+            
+        self.coords = self.coords.to(dtype=dtype, device=device)
+        self.covariances = self.covariances.to(dtype=dtype, device=device)
         self.colors = self.colors.to(dtype=torch.uint8, device=device)
         self.alphas = self.alphas.to(dtype=torch.float32, device=device)
 

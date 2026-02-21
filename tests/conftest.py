@@ -3,6 +3,8 @@ from pathlib import Path
 from v2w.geometry.points import *
 
 
+
+
 #====================================================
 # Config test fixtures
 #====================================================
@@ -33,6 +35,8 @@ def train_cfg_path(cfgs_root_dir):
 
 
 
+
+
 #====================================================
 # Geometry test fixtures
 #====================================================
@@ -46,6 +50,7 @@ def dataset_root_dir():
 @pytest.fixture
 def tum_dataset_ext_data_path(dataset_root_dir):
     return dataset_root_dir / "tum_visual_inertial_dataset"
+
 
 
 # |---> Point test fixtures
@@ -67,6 +72,8 @@ def p2():
         color = torch.tensor([40, 1, 74]),
         alpha = torch.tensor([0.8])
     )
+
+
 
 # |---> Points test fixtures
 
@@ -106,6 +113,8 @@ def pts2():
         alphas = torch.tensor([0.3, 0.4])
     )
 
+
+
 # |---> Point cloud test fixtures
 
 @pytest.fixture
@@ -127,12 +136,8 @@ def pts_cloud(bounds, res):
     return PointCloud(bounds, res)
 
 
+
 # |---> Projection test fixtures
-
-import torch
-import pytest
-
-# ---------- Extrinsics (world → camera) ----------
 
 @pytest.fixture
 def W():
@@ -140,10 +145,9 @@ def W():
         [[ 0.70710678, 0.0,  0.70710678, 0.0],
          [ 0.0,        1.0,  0.0,        0.0],
          [-0.70710678, 0.0,  0.70710678, 0.0]],
-        dtype=torch.float32
+        dtype=torch.float64
     )
 
-# ---------- Intrinsics ----------
 
 @pytest.fixture
 def K():
@@ -151,10 +155,9 @@ def K():
         [[800., 0., 320.],
          [0., 800., 240.],
          [0., 0., 1.]],
-        dtype=torch.float32
+        dtype=torch.float64
     )
 
-# ---------- World / SFM points ----------
 
 @pytest.fixture
 def sfm_pts():
@@ -181,7 +184,6 @@ def sfm_pts():
         alphas=torch.tensor([0.5,0.8,0.3])
     )
 
-# ---------- Camera points (Xc = R Xw) ----------
 
 @pytest.fixture
 def cam_pts():
@@ -208,7 +210,6 @@ def cam_pts():
         alphas=torch.tensor([0.5,0.8,0.3])
     )
 
-# ---------- Ray points (normalized camera coords) ----------
 
 @pytest.fixture
 def ray_pts():
@@ -235,7 +236,6 @@ def ray_pts():
         alphas=torch.tensor([0.5,0.8,0.3])
     )
 
-# ---------- Image points (projection with K) ----------
 
 @pytest.fixture
 def img_pts():

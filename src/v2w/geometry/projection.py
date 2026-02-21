@@ -101,12 +101,12 @@ def project_ray_to_img(ray_pts: RayPoints, K: torch.Tensor) -> ImagePoints:
     
     N = ray_pts.coords.shape[0]
     #K = K.unsqueeze(0).repeat(N, 1, 1)
-    img_coords = K @ ray_pts.coords.unsqueeze(-1)
+    img_coords = (K @ ray_pts.coords.T).T
     img_covariances = ray_pts.covariances
     
     img_pts = ImagePoints(
-        coords=img_coords,
-        covariances=img_covariances,
+        coords=img_coords[:, :2],
+        covariances=img_covariances[:, :2, :2],
         colors=ray_pts.colors,
         alphas=ray_pts.alphas
     )
