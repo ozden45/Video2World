@@ -1,12 +1,7 @@
-# --------------------------------------------------------------
-#   splat.py
-#
-#   Description:
-#
-#   Author: Özden Özel
-#   Created: 2026-02-08
-#
-# --------------------------------------------------------------
+"""
+Gaussian splatting CUDA extension.
+
+"""
 
 import os
 from torch.utils.cpp_extension import load

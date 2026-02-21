@@ -15,10 +15,10 @@ torch::Tensor gaussian_splat(
 {
     int N = mu.size(0);
 
-    mu = mu.contiguous();
-    inv_cov = inv_cov.contiguous();
-    clr = clr.contiguous();
-    alpha = alpha.contiguous();
+    torch::Tensor _mu = mu.contiguous();
+    torch::Tensor _inv_cov = inv_cov.contiguous();
+    torch::Tensor _clr = clr.contiguous();
+    torch::Tensor _alpha = alpha.contiguous();
 
     auto img = torch::zeros({H, W, 3},
         torch::dtype(torch::kFloat32).device(mu.device()));
@@ -28,10 +28,10 @@ torch::Tensor gaussian_splat(
 
     gaussian_splat_kernel<<<blocks, THREADS>>>(
         img.data_ptr<float>(),
-        mu.data_ptr<float>(),
-        inv_cov.data_ptr<float>(),
-        clr.data_ptr<float>(),
-        alpha.data_ptr<float>(),
+        _mu.data_ptr<float>(),
+        _inv_cov.data_ptr<float>(),
+        _clr.data_ptr<float>(),
+        _alpha.data_ptr<float>(),
         W,
         H,
         N,
