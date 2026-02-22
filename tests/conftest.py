@@ -259,3 +259,18 @@ def img_pts():
         alphas=torch.tensor([0.5,0.8,0.3])
     )
     
+
+
+#====================================================
+# Rendering fixtures
+#====================================================
+
+@pytest.fixture
+def img_empty():
+    H, W = 480, 640
+    return torch.zeros(
+        (H, W, 3), 
+        dtype=torch.float32, 
+        device=torch.device("cuda")
+        )
+

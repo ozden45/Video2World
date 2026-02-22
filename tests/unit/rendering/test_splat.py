@@ -21,17 +21,21 @@ def test_gaussian_splat_ext(p1, p2):
     
     H, W = 480, 640
     
+    # Output image buffer
+    img = torch.zeros((H, W, 3), dtype=torch.float32, device=torch.device("cuda"))  
+    
     # Call the Gaussian splatting extension
     img = gaussian_splat_ext.gaussian_splat(
+        img=img,
         mu=mu,
         inv_cov=inv_cov,
         clr=clr,
         alpha=alpha,
         H=H,
         W=W,
-        nsigma=3
+        nsigma=20
     )
     
     # Check the output shape
     assert img.shape == (H, W, 3), f"Expected output shape {(H,W,3)}, got {img.shape}"
-
+    #assert False

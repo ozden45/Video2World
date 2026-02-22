@@ -26,5 +26,4 @@ gaussian_splat_ext = load(
     extra_cuda_cflags=["-O3"],
 )
 
-gaussian_splat = gaussian_splat_ext.gaussian_splat
-print(type(gaussian_splat))
+
