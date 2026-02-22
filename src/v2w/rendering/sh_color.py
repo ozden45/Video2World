@@ -10,6 +10,7 @@ import sympy as sp
 import math
 
 
+
 def sh_color_channel(view: torch.Tensor, c_lm: torch.Tensor, sgd_scale: float = 10.0) -> int:
     """
     Calculate the spherical harmonics lighting coefficients based on the view direction.
@@ -61,6 +62,7 @@ def sh(view: torch.Tensor, l: int, m: int) -> float:
     exp_term = torch.exp(1j * m * phi)   # requires PyTorch complex support, yields complex tensor
     Y = alpha * P_lm * exp_term
     return float(Y.real)
+
 
 
 def sh_color(view: torch.Tensor, c_lm_rgb: torch.Tensor) -> torch.Tensor:
