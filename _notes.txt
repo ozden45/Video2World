@@ -1,0 +1,142 @@
+Given your structure, this is already fairly professional 👍 — it looks like a clean Python package with:
+
+* `src/v2w/` → main library code
+* `tests/` → separated test hierarchy
+* `configs/` → configuration
+* `experiments/` → research runs
+* `notebooks/` → exploration
+
+Now for a **video → 3D points converter**, the correct location depends on its role.
+
+---
+
+# 🎯 Short Answer
+
+For a professional, scalable structure:
+
+> ✅ Put the core converter logic inside:
+
+```
+src/v2w/inference/
+```
+
+or, if it's geometric reconstruction–focused:
+
+```
+src/v2w/geometry/
+```
+
+---
+
+# 🧠 How to Decide
+
+## 1️⃣ If it is a Pipeline / Runtime Component
+
+(e.g., takes video → runs model → outputs point cloud)
+
+Put it in:
+
+```
+src/v2w/inference/video_to_points.py
+```
+
+Because:
+
+* It’s a runtime operation
+* It connects model + geometry + dataset
+* It’s not a pure math utility
+
+This is the most common professional choice.
+
+---
+
+## 2️⃣ If It’s Pure Reconstruction Logic
+
+(e.g., triangulation, structure-from-motion math)
+
+Put it in:
+
+```
+src/v2w/geometry/reconstruction.py
+```
+
+Because:
+
+* It belongs to geometric algorithms
+* It should be model-agnostic
+
+---
+
+## 3️⃣ If It’s a Trainable Model (end-to-end network)
+
+Then:
+
+```
+src/v2w/models/video_to_points_model.py
+```
+
+But this is only if it's literally a neural network class.
+
+---
+
+# 🏗 Recommended Professional Layout
+
+For your case, I’d structure it like this:
+
+```
+src/v2w/
+    inference/
+        video_to_points.py      ← pipeline orchestration
+    geometry/
+        triangulation.py
+        sfm.py
+        pointcloud.py
+```
+
+Where:
+
+* `video_to_points.py` → orchestrates:
+
+  * video loading
+  * feature extraction
+  * depth estimation / pose estimation
+  * triangulation
+  * returns point cloud
+
+* `geometry/` → contains math-only modules
+
+---
+
+# 🧪 Tests
+
+Mirror it in:
+
+```
+tests/unit/inference/test_video_to_points.py
+tests/unit/geometry/test_triangulation.py
+```
+
+---
+
+# 🚫 Where NOT to Put It
+
+❌ Not in `utils/`
+That folder should only contain generic helpers (logging, io, small tools).
+
+❌ Not in `datasets/`
+That’s for data loaders only.
+
+❌ Not in `experiments/`
+That’s for scripts and experiment configs.
+
+---
+
+# 🏆 Professional Rule of Thumb
+
+> **Pipelines go in `inference/`**
+> **Math goes in `geometry/`**
+> **Neural networks go in `models/`**
+
+---
+
+If you describe your converter (class-based? CLI tool? model-based? SfM?), I can suggest an exact file + class structure.

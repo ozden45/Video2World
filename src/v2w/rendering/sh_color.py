@@ -5,7 +5,6 @@ SH color calculation based on view direction and spherical harmonics coefficient
 """
 
 import torch
-from typing import Tuple
 import sympy as sp
 import math
 

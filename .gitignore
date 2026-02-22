@@ -55,6 +55,7 @@ experiments/
 outputs/
 logs/
 checkpoints/
+cache/
 *.ckpt
 *.pt
 *.pth
@@ -63,9 +64,6 @@ checkpoints/
 *.npy
 *.npz
 
-# If you later download datasets
-datasets/
-cache/
 
 # =========================================================
 # CUDA / C++ build artifacts
