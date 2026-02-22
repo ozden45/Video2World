@@ -41,5 +41,15 @@ torch::Tensor gaussian_splat(
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {
-    m.def("gaussian_splat", &gaussian_splat);
+    m.def(
+    "gaussian_splat",
+    &gaussian_splat,
+    py::arg("mu"),
+    py::arg("inv_cov"),
+    py::arg("clr"),
+    py::arg("alpha"),
+    py::arg("H"),
+    py::arg("W"),
+    py::arg("nsigma")
+);
 }

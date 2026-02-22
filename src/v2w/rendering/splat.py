@@ -4,8 +4,15 @@ Gaussian splatting CUDA extension.
 """
 
 import os
+import torch
 from torch.utils.cpp_extension import load
 from pathlib import Path
+
+
+if torch.cuda.is_available():
+    major, minor = torch.cuda.get_device_capability()
+    arch = f"{major}.{minor}"
+    os.environ["TORCH_CUDA_ARCH_LIST"] = arch
 
 this_dir = os.path.dirname(__file__)
 

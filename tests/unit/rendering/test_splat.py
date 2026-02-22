@@ -28,7 +28,8 @@ def test_gaussian_splat_ext(p1, p2):
         clr=clr,
         alpha=alpha,
         H=H,
-        W=W
+        W=W,
+        nsigma=3
     )
     
     # Check the output shape
