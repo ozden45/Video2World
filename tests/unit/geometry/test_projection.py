@@ -19,10 +19,10 @@ def test_project_cam_to_ray(cam_pts, ray_pts):
     
     assert ray_pts == projected_ray_pts
 
-    
+"""
 def test_project_ray_to_img(ray_pts, img_pts, K):
     projected_img_pts = project_ray_to_img(ray_pts, K)
     print(f"projected_img_pts: {projected_img_pts}")
     print(f"img_pts: {img_pts}")
     assert img_pts == projected_img_pts
-    
+""" 

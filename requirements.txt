@@ -5,3 +5,5 @@ typing
 pytest
 timm
 pydantic
+ninja
+torch

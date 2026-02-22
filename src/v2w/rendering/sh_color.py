@@ -1,15 +1,8 @@
-# --------------------------------------------------------------
-#   sh_color.py
-#
-#   Description:
-#       This script includes functions used in the calculation 
-#       of spherical harmonics color.
-#   
-#   Author: �zden �zel
-#   Created: 2026-01-31
-#
-# --------------------------------------------------------------
+"""
+sh_color.py
 
+SH color calculation based on view direction and spherical harmonics coefficients.
+"""
 
 import torch
 from typing import Tuple

@@ -1,8 +1,6 @@
 #include <torch/extension.h>
+#include "splat_kernel.cuh"
 
-#define THREADS 256
-
-// Wrapper
 torch::Tensor gaussian_splat(
     torch::Tensor mu,
     torch::Tensor inv_cov,
@@ -15,18 +13,17 @@ torch::Tensor gaussian_splat(
 {
     int N = mu.size(0);
 
-    torch::Tensor _mu = mu.contiguous();
-    torch::Tensor _inv_cov = inv_cov.contiguous();
-    torch::Tensor _clr = clr.contiguous();
-    torch::Tensor _alpha = alpha.contiguous();
+    auto _mu = mu.contiguous();
+    auto _inv_cov = inv_cov.contiguous();
+    auto _clr = clr.contiguous();
+    auto _alpha = alpha.contiguous();
 
-    auto img = torch::zeros({H, W, 3},
-        torch::dtype(torch::kFloat32).device(mu.device()));
+    auto img = torch::zeros(
+        {H, W, 3},
+        torch::dtype(torch::kFloat32).device(mu.device())
+    );
 
-
-    int blocks = (N + THREADS - 1) / THREADS;
-
-    gaussian_splat_kernel<<<blocks, THREADS>>>(
+    launch_gaussian_splat(
         img.data_ptr<float>(),
         _mu.data_ptr<float>(),
         _inv_cov.data_ptr<float>(),
@@ -42,7 +39,6 @@ torch::Tensor gaussian_splat(
 }
 
 
-// Binding
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {
     m.def("gaussian_splat", &gaussian_splat);

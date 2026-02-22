@@ -43,10 +43,6 @@ def _convert(cls, d):
 
     kwargs = {}
 
-    print(cls)
-    print(d)
-    print(f"------------------------------")
-    print(f"------------------------------")
     for f in fields(cls):
         print(f"f.name: {f.name}")
         value = d[f.name]
