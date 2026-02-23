@@ -1,33 +1,36 @@
 from pathlib import Path
-from .base_dataset import BaseDataset
+import os
+import numpy as np
+import torch
+from v2w.datasets.base_dataset import BaseDataset
 
 
 class TumVIDataset(BaseDataset):
     def __init__(self, root: str, split: str = "train"):
         super().__init__(root, split)
-        self.root = Path(root)
+        self.root = Path(root) / "split" / "train"
         self.sequences = self._load_split()
 
     def _load_split(self):
-        split_file = Path("data/splits") / f"tum_vi_{self.split}.png"
-        with open(split_file) as f:
-            return [line.strip() for line in f]
+        sequences = []
+        for file in os.listdir(self.root):
+            if file.endswith(".npz"):
+                sequences.append(file[:-4])
+                
+        return sequences
 
     def __len__(self):
         return len(self.sequences)
 
     def __getitem__(self, idx):
         sequence = self.sequences[idx]
-        seq_path = self.root / sequence
+        sample_path = self.root / f"{sequence}.npz"
         
-        
-        
-        
-        # Load image and extrinsiics
+        data = np.load(sample_path)
         
         return {
-            "image": image,
-            "extrinsics": extrinsics,
-            "sequence": sequence
-            }
-    
+            "sequence": data["sequence"],
+            "frame": torch.from_numpy(data["frame"]).float(),
+            "extrinsics": torch.from_numpy(data["extrinsics"]).float()
+        }
+        

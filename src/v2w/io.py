@@ -43,7 +43,7 @@ def load_frame_csv(path: str | Path) -> Tuple[List[str], List[str]]:
     return sequences, files
 
 
-def load_extrinsics_csv(path: str | Path) -> Tuple[List[str], List[float], List[float]]:
+def load_extrinsics_csv(path: str | Path) -> Tuple[List[List[float]], List[List[float]], List[List[float]]]:
     if not if_path_exists(path):
         raise FileNotFoundError(f"The path '{path}' is not found.")
 

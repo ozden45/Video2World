@@ -14,9 +14,10 @@ from v2w.utils.misc import if_path_exists
 from v2w.utils.math import quat_to_rot_mat
 
 
-def _save_sample_tum_vi(path: str | Path, frame: torch.Tensor, extrinsics: torch.Tensor):
+def _save_sample_tum_vi(path: str, sequence: str, frame: torch.Tensor, extrinsics: torch.Tensor):
     np.savez(
         path,
+        sequence=sequence,
         frame=frame.numpy(),
         extrinsics=extrinsics.numpy()
     )
@@ -36,22 +37,52 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
     
     # Define the splits
     splits = ["train", "val", "test"]
+
+    # Define paths
+    cam1_dir = Path(root) / "mav0" / "cam1"
+    mocap0_dir = Path(root) / "mav0" / "mocap0"
+    img_dir = Path(cam1_dir) / "data"
+    frame_csv = Path(cam1_dir) / "data.csv"
+    
+    # Load sequences and frame names from the CSV file
+    seqs, frame_names = load_frame_csv(frame_csv)
+
+    # Load extrinsics from the mocap CSV file    
+    ext_csv = Path(mocap0_dir) / "data.csv"
+    _, translation, rotation_q = load_extrinsics_csv(ext_csv)
+
+    # Get split indices based on the provided ratios
+    N = len(frame_names)
+    train_end = int(N * split_ratios["train"])
+    val_end = train_end + int(N * split_ratios["val"])
+    test_end = val_end + int(N * split_ratios["test"])
     
     for split in splits:
-        # Define paths
-        cam1_dir = Path(root) / "mav0" / "cam1"
-        mocap0_dir = Path(root) / "mav0" / "mocap0"
-        img_dir = Path(cam1_dir) / "data"
-        frame_csv = Path(cam1_dir) / "data.csv"
+        match split:
+            case "train":
+                split_iter = zip(seqs[:train_end], frame_names[:train_end], translation[:train_end], rotation_q[:train_end])
+            case "val":
+                split_iter = zip(seqs[train_end:val_end], frame_names[train_end:val_end], translation[train_end:val_end], rotation_q[train_end:val_end])
+            case "test":
+                split_iter = zip(seqs[val_end:test_end], frame_names[val_end:test_end], translation[val_end:test_end], rotation_q[val_end:test_end])
+            
+        for seq, frame_name, tr, rot_q in split_iter:
+            # Convert quaternion to rotation matrix
+            rot = quat_to_rot_mat(rot_q)
+                        
+            # Combine translation and rotation into extrinsics
+            rot_tensor = torch.tensor(rot)
+            tr_tensor = torch.tensor(tr)
+            extrinsics = torch.cat([rot_tensor, tr_tensor], dim=1)
+            
+            # Load frame
+            frame_path = img_dir / frame_name
+            frame = load_frame_as_numpy(frame_path)
+
+            # Save the sample to the corresponding split directory
+            dest_path = Path(split_dir) / split / f"{frame_name}.npz" 
+            _save_sample_tum_vi(dest_path, seq, frame, extrinsics)    
         
-        # Load sequences and frame names from the CSV file
-        seqs, frame_name = load_frame_csv(frame_csv)
-        
-        # For randomly splitting the dataset, shuffle the sequences
-        random.shuffle(seqs)
-        
-        ext_csv = Path(mocap0_dir) / "data.csv"
-        _, translation, rotation_q = load_extrinsics_csv(ext_csv)
         
         # Convert quaternion to rotation matrix
         rotation = quat_to_rot_mat(rotation_q)
@@ -60,7 +91,7 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
         extrinsics = torch.cat([
             torch.tensor(rotation),
             torch.tensor(translation)
-            ], dim=2)
+            ], dim=1)
 
         # Load frame
         frame_path = img_dir / frame_name
