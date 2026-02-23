@@ -35,8 +35,28 @@ def split_tum_vi_dataset(root: str, split_ratios: dict):
         # For example, you could create directories like root/train, root/val, root/test
         # and move the corresponding sequences there.
 
-        sequences_dir = Path(root) / "data"
-        csv_path = Path(root) / "data.csv"
+
+
+
+
+        cam1_dir = Path(root) / "mav0" / "cam1"
+        mocap0_dir = Path(root) / "mav0" / "mocap0"
+        img_dir = Path(cam1_dir) / "data"
+        seq_csv = Path(cam1_dir) / "data.csv"
+        
+        sequences = load_frame_csv(seq_csv)
+        
+        # For randomly splitting the dataset, shuffle the sequences
+        random.shuffle(sequences)
+        
+        
+        
+        
+
+
+
+        data_dir = Path(root) / "data"
+        csv_path = Path(data_dir) / "data.csv"
         sequences = load_frame_csv(csv_path)
         
         # For randomly splitting the dataset, shuffle the sequences
@@ -60,7 +80,8 @@ def split_tum_vi_dataset(root: str, split_ratios: dict):
             split_dir.mkdir(exist_ok=True)
             
             for seq in seqs:
-                seq_path = sequences_dir / seq / ".png"
+                img_path = data_dir / seq / ".png"
+                ext_path
                 # Copy the file to the split directory
                 dest_path = split_dir / seq
         
