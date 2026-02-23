@@ -6,12 +6,23 @@ Dataset split management for Video2World.
 
 from pathlib import Path
 import os
+import numpy as np
+import torch
 import random
+from v2w.io import load_frame_as_numpy, load_frame_csv, load_extrinsics_csv
 from v2w.utils.misc import if_path_exists
-from v2w.io import load_frame, load_frame_csv
+from v2w.utils.math import quat_to_rot_mat
 
 
-def split_tum_vi_dataset(root: str, split_ratios: dict):
+def _save_sample_tum_vi(path: str | Path, frame: torch.Tensor, extrinsics: torch.Tensor):
+    np.savez(
+        path,
+        frame=frame.numpy(),
+        extrinsics=extrinsics.numpy()
+    )
+
+
+def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
     """
     Splits the raw TUM VI dataset into train/val/test sets based on predefined splits.
     
@@ -27,61 +38,36 @@ def split_tum_vi_dataset(root: str, split_ratios: dict):
     splits = ["train", "val", "test"]
     
     for split in splits:
-        split_file = Path(root) / f"tum_vi_{split}.txt"
-        with open(split_file) as f:
-            sequences = [line.strip() for line in f]
-        
-        # Here you would implement logic to move/copy files into split-specific directories
-        # For example, you could create directories like root/train, root/val, root/test
-        # and move the corresponding sequences there.
-
-
-
-
-
+        # Define paths
         cam1_dir = Path(root) / "mav0" / "cam1"
         mocap0_dir = Path(root) / "mav0" / "mocap0"
         img_dir = Path(cam1_dir) / "data"
-        seq_csv = Path(cam1_dir) / "data.csv"
+        frame_csv = Path(cam1_dir) / "data.csv"
         
-        sequences = load_frame_csv(seq_csv)
-        
-        # For randomly splitting the dataset, shuffle the sequences
-        random.shuffle(sequences)
-        
-        
-        
-        
-
-
-
-        data_dir = Path(root) / "data"
-        csv_path = Path(data_dir) / "data.csv"
-        sequences = load_frame_csv(csv_path)
+        # Load sequences and frame names from the CSV file
+        seqs, frame_name = load_frame_csv(frame_csv)
         
         # For randomly splitting the dataset, shuffle the sequences
-        random.shuffle(sequences)
+        random.shuffle(seqs)
         
-        # Split the sequences bsaed on the specified ratios
-        num_sequences = len(sequences)
-        train_end = int(split_ratios["train"] * num_sequences)
-        val_end = train_end + int(split_ratios["val"] * num_sequences)
-        test_end = val_end + int(split_ratios["test"] * num_sequences)
+        ext_csv = Path(mocap0_dir) / "data.csv"
+        _, translation, rotation_q = load_extrinsics_csv(ext_csv)
         
-        split_sequences = {
-            "train": sequences[:train_end],
-            "val": sequences[train_end:val_end],
-            "test": sequences[val_end:test_end],
-        }
+        # Convert quaternion to rotation matrix
+        rotation = quat_to_rot_mat(rotation_q)
         
-        # Create split folder and move files into them
-        for split, seqs in split_sequences.items():
-            split_dir = Path(root).parents[3] / "splits" / split
-            split_dir.mkdir(exist_ok=True)
-            
-            for seq in seqs:
-                img_path = data_dir / seq / ".png"
-                ext_path
-                # Copy the file to the split directory
-                dest_path = split_dir / seq
+        # Combine translation and rotation into extrinsics
+        extrinsics = torch.cat([
+            torch.tensor(rotation),
+            torch.tensor(translation)
+            ], dim=2)
+
+        # Load frame
+        frame_path = img_dir / frame_name
+        frame = load_frame_as_numpy(frame_path)
+
+        # Save the sample to the corresponding split directory
+        dest_path = Path(split_dir) / split / f"{frame_name}.npz" 
+        _save_sample_tum_vi(dest_path, frame, extrinsics)
+
         

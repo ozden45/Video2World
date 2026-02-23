@@ -8,12 +8,22 @@ from typing import List, Tuple
 from v2w.utils.misc import if_path_exists
 
 
-def load_frame(path: str | Path) -> torch.Tensor:
+def load_frame_as_tensor(path: str | Path) -> torch.Tensor:
     if not if_path_exists(path):
         raise FileNotFoundError(f"The path {path} is not found")
     
     frame = cv.imread(path)
     frame = torch.Tensor(frame)
+    
+    return frame
+
+
+def load_frame_as_numpy(path: str | Path) -> np.ndarray:
+    if not if_path_exists(path):
+        raise FileNotFoundError(f"The path {path} is not found")
+    
+    frame = cv.imread(path)
+    frame = np.array(frame)
     
     return frame
 
@@ -33,7 +43,7 @@ def load_frame_csv(path: str | Path) -> Tuple[List[str], List[str]]:
     return sequences, files
 
 
-def load_extrinsics_csv(path: str | Path) -> Tuple[List[str], torch.Tensor]:
+def load_extrinsics_csv(path: str | Path) -> Tuple[List[str], List[float], List[float]]:
     if not if_path_exists(path):
         raise FileNotFoundError(f"The path '{path}' is not found.")
 
@@ -45,7 +55,7 @@ def load_extrinsics_csv(path: str | Path) -> Tuple[List[str], torch.Tensor]:
     translation = df["[p_RS_R_x [m]", "p_RS_R_y [m]", "p_RS_R_z [m]"].tolist()
     rotation = df["q_RS_w []", "q_RS_x []", "q_RS_y []", "q_RS_z []"].tolist()
     
-    return sequences, torch.tensor(translation), torch.tensor(rotation)
+    return sequences, translation, rotation
     
 
 def load_yaml(path: str | Path) -> dict:
