@@ -5,9 +5,10 @@ Dataset split management for Video2World.
 """
 
 from pathlib import Path
+import os
 import random
 from v2w.utils.misc import if_path_exists
-from v2w.io import load_frame_csv
+from v2w.io import load_frame, load_frame_csv
 
 
 def split_tum_vi_dataset(root: str, split_ratios: dict):
@@ -60,5 +61,6 @@ def split_tum_vi_dataset(root: str, split_ratios: dict):
             
             for seq in seqs:
                 seq_path = sequences_dir / seq / ".png"
-                
+                # Copy the file to the split directory
+                dest_path = split_dir / seq
         
