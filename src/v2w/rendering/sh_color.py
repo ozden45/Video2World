@@ -7,10 +7,10 @@ SH color calculation based on view direction and spherical harmonics coefficient
 import torch
 import sympy as sp
 import math
+from typing import Tuple
 
 
-
-def sh_color_channel(view: torch.Tensor, c_lm: torch.Tensor, sgd_scale: float = 10.0) -> int:
+def sh_color_channel(view: Tuple[float, float], c_lm: torch.Tensor, sgd_scale: float = 10.0) -> int:
     """
     Calculate the spherical harmonics lighting coefficients based on the view direction.
     Args:
@@ -41,7 +41,7 @@ def sh_color_channel(view: torch.Tensor, c_lm: torch.Tensor, sgd_scale: float = 
     
 
 
-def sh(view: torch.Tensor, l: int, m: int) -> float:
+def sh(view: Tuple[float, float], l: int, m: int) -> float:
     """
     Calculate the spherical harmonics basis functions up to the 2nd order.
     Args:
@@ -64,7 +64,7 @@ def sh(view: torch.Tensor, l: int, m: int) -> float:
 
 
 
-def sh_color(view: torch.Tensor, c_lm_rgb: torch.Tensor) -> torch.Tensor:
+def sh_color(view: Tuple[float, float], c_lm_rgb: torch.Tensor) -> torch.Tensor:
     """
     Calculate the spherical harmonics lighting coefficients based on the view direction.
     Args:
@@ -73,7 +73,6 @@ def sh_color(view: torch.Tensor, c_lm_rgb: torch.Tensor) -> torch.Tensor:
         float: The calculated spherical harmonics lighting coefficients.
     """
     
-    theta, phi = view
     #if theta < 0 or theta > torch.pi:
     #    raise ValueError("Theta must be in [0, pi] and phi must be in [0, 2pi]")
     #if phi < 0 or phi > 2 * torch.pi:

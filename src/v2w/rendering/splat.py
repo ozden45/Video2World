@@ -66,8 +66,8 @@ def gaussian_splat(
         inv_cov=inv_cov,
         clr=clr,
         alpha=alpha,
-        H=H,
-        W=W,
+        H=img_size[0],
+        W=img_size[1],
         nsigma=nsigma
     )
     

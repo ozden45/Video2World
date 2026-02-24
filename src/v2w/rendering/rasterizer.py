@@ -7,9 +7,8 @@ Rasterization-based rendering of 3D points into 2D images.
 import torch
 from typing import Tuple
 from v2w.geometry.projection import project_sfm_to_img_tensor
-from v2w.geometry.points import SFMPoints, ImagePoints
 from v2w.rendering.splat import gaussian_splat
-
+from v2w.rendering.sh_color import sh_color
 
 def rasterize(
     sfm_coords: torch.Tensor, 
