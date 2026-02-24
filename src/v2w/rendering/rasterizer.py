@@ -7,6 +7,7 @@ Rasterization-based rendering of 3D points into 2D images.
 import torch
 from typing import Tuple
 from v2w.geometry.projection import project_sfm_to_img_tensor
+from v2w.geometry.camera import extrinsic_to_view
 from v2w.rendering.splat import gaussian_splat
 from v2w.rendering.sh_color import sh_color
 
@@ -33,13 +34,15 @@ def rasterize(
     """
     
     # Empty image sheet
-    H, W = img_size[0], img_size[1]
-    img = torch.zeros((H, W, 3), dtype=torch.float32, device=torch.device("cuda"))  
+    img = torch.zeros((img_size[0], img_size[1], 3), dtype=torch.float32, device=torch.device("cuda"))  
+    
+    # Calculate the view direction
+    view = extrinsic_to_view(W[:3, :3])
     
     # Project 3D points to 2D image space
     coords, covs = project_sfm_to_img_tensor(sfm_coords, sfm_covs, W, K)
     inv_covs = torch.linalg.inv(covs)
-    colors = sfm_colors
+    colors = sh_color(view, sfm_colors)
     alphas = sfm_alphas
     
     # Rasterize points using Gaussian splatting

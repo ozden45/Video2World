@@ -88,12 +88,3 @@ def sh_color(view: Tuple[float, float], c_lm_rgb: torch.Tensor) -> torch.Tensor:
 
     return (C_R, C_G, C_B)
 
-
-
-
-if __name__ == "__main__":
-    view = torch.tensor([torch.pi/4, torch.pi/4])
-    c_lm_rgb = torch.rand((3,9))
-    sh_rgb = sh_color(view, c_lm_rgb)
-
-    print(f"SH color: {sh_rgb}")
