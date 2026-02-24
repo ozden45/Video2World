@@ -6,8 +6,14 @@ between different space coordinates.
 """
 
 import torch
+from typing import Tuple
 from v2w.geometry.points import SFMPoints, CamPoints, RayPoints, ImagePoints
 from v2w.exception import ShapeError
+
+
+
+
+# ======================== Projection Functions with Points ========================
 
 
 def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CamPoints:
@@ -131,4 +137,110 @@ def project_sfm_to_img(sfm_pts: SFMPoints, W: torch.Tensor, K: torch.Tensor) -> 
     
     return img_pts
 
+
+
+
+
+
+# ======================== Projection Functions with Tensors ========================
+
+
+def project_sfm_to_cam_tensor(sfm_coords: torch.Tensor, sfm_covariances: torch.Tensor, W: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Projects SfM points from world to camera space.
+    Args:   
+        sfm_pts (SFMPoints): The points in the world space.
+        W (torch.Tensor): The extrinsic camera parameters.
+    Returns:
+        cam_pts (CamPoints): The points in the camera space.
+    """
+    # Check the shape of W
+    if W.shape != (3, 4):
+        raise ShapeError(f"project_sfm_to_cam(): Invalid W shape {W.shape}, expected (3,4).")
+    
+    # Carry W tensor to the same device and dtype as sfm_pts
+    W = W.to(
+        dtype=sfm_pts.coords.dtype, 
+        device=sfm_pts.coords.device
+        )
+    
+    # Convert W to the rotation matrix (R) and translational matrix (t)
+    R = W[:3, :3]
+    t = W[:3, 3:].reshape(3, 1)
+
+    # Calculate the points of the coordinates and covariances in the camera space
+    cam_coords = (R @ sfm_coords.T).T + t
+    cam_covariances = R @ sfm_covariances @ R.transpose(-2, -1)
+    
+    return cam_coords, cam_covariances
+        
+
+def project_cam_to_ray_tensor(cam_coords: torch.Tensor, cam_covariances: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Projects 3D points from camera to ray space.
+    Args:   
+        cam_pts (CamPoints): The points in the camera space.
+    Returns:
+        ray_pts (RayPoints): The points in the ray space.
+    """
+    X = cam_coords 
+    N = X.shape[0]
+
+    norm = torch.linalg.norm(X, dim=1, keepdim=True)
+    ray_coords = X / norm 
+
+    J = torch.zeros((N, 3, 3), device=X.device, dtype=X.dtype)
+
+    for i in range(3):
+        for j in range(3):
+            if i == j:
+                J[:, i, j] = (norm.squeeze()**2 - X[:, i]**2) / norm.squeeze()**3
+            else:
+                J[:, i, j] = -X[:, i] * X[:, j] / norm.squeeze()**3
+
+    ray_covariances = J @ cam_covariances @ J.transpose(-2, -1)
+    
+    return ray_coords, ray_covariances
+
+
+def project_ray_to_img_tensor(ray_coords: torch.Tensor, ray_covariances: torch.Tensor, K: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Projects 3D points from ray to image space.
+    Args:   
+        ray_pts (RayPoints): The points in the ray space.
+        K (torch.Tensor): The intrinsic camera parameter matrix.
+    Returns:
+        img_pts (ImagePoints): The points in the image space.
+    """
+    
+    # Carry W tensor to the same device and dtype as sfm_pts
+    K = K.to(
+        dtype=ray_coords.dtype, 
+        device=ray_coords.device
+        )
+    
+    N = ray_coords.shape[0]
+    #K = K.unsqueeze(0).repeat(N, 1, 1)
+    img_coords = (K @ ray_coords.T).T
+    img_covariances = ray_covariances
+    
+    return img_coords[:, :2], img_covariances[:, :2, :2]
+
+
+def project_sfm_to_img_tensor(sfm_coords: torch.Tensor, sfm_covariances: torch.Tensor, W: torch.Tensor, K: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Projects 3D points from world to image space.
+    Args:   
+        sfm_pts (SFMPoints): The points in the world space.
+        W (torch.Tensor): The extrinsic camera parameter matrix.
+        K (torch.Tensor): The intrinsic camera parameter matrix.
+    Returns:
+        img_pts (ImagePoints): The points in the image space.
+    """
+
+    cam_coords, cam_covariances = project_sfm_to_cam_tensor(sfm_coords, sfm_covariances, W)
+    ray_coords, ray_covariances = project_cam_to_ray_tensor(cam_coords, cam_covariances)
+    img_coords, img_covariances = project_ray_to_img_tensor(ray_coords, ray_covariances, K)
+    
+    return img_coords, img_covariances
 

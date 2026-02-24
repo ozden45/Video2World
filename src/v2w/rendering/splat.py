@@ -3,10 +3,11 @@ Gaussian splatting CUDA extension.
 
 """
 
-import os
 import torch
 from torch.utils.cpp_extension import load
+import os
 from pathlib import Path
+from typing import Tuple
 from v2w.geometry.points import ImagePoints
 
 
@@ -29,8 +30,12 @@ gaussian_splat_ext = load(
 
 
 def gaussian_splat(
-    img_pts: ImagePoints,
-    img_size : torch.Tensor = torch.tensor([480, 640]),
+    img: torch.Tensor,
+    mu: torch.Tensor,
+    inv_cov: torch.Tensor,
+    clr: torch.Tensor,
+    alpha: torch.Tensor,
+    img_size: Tuple[int, int],
     nsigma: int = 20
 ) -> torch.Tensor:
     """
@@ -49,10 +54,6 @@ def gaussian_splat(
     Returns:
         torch.Tensor: The splatted image of shape (H, W, 3).
     """
-    
-    # Empty image sheet
-    H, W = img_size[0], img_size[1]
-    img = torch.zeros((H, W, 3), dtype=torch.float32, device=torch.device("cuda"))  
     
     mu = img_pts.coords
     inv_cov = img_pts.covariances

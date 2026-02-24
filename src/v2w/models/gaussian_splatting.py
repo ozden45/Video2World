@@ -7,18 +7,55 @@ This script includes an implementation of Gaussian splatting using Pytorch.
 
 import torch
 import torch.nn as nn
-from v2w.geometry.points import ImagePoint, ImagePoints
+from v2w.geometry.points import PointCloud
+from v2w.geometry.projection import project_sfm_to_cam_tensor, project_cam_to_ray_tensor, project_ray_to_img_tensor
+#from v2w.rendering.rasterizer
 
 
-class PointModel(nn.Module):
-    def __init__(self, img_pts: ImagePoints):
+class PointCloudModel(nn.Module):
+    def __init__(self, pts_cloud: PointCloud):
         super().__init__()
         
         # Learnable parameters for each point
-        self.coords = nn.Parameter(img_pts.coords) 
-        self.covariances = nn.Parameter(img_pts.covariances)
-        self.colors = nn.Parameter(img_pts.colors)
-        self.alphas = nn.Parameter(img_pts.alphas)
+        self.coords = nn.Parameter(pts_cloud.coords)
+        self.covariances = nn.Parameter(pts_cloud.covariances)
+        self.colors = nn.Parameter(pts_cloud.colors)
+        self.alphas = nn.Parameter(pts_cloud.alphas)
+        
+        # Volume index mapping
+        x, y, z = torch.meshgrid(
+            torch.arange(pts_cloud.shape[0], device='cuda'),
+            torch.arange(pts_cloud.shape[1], device='cuda'),
+            torch.arange(pts_cloud.shape[2], device='cuda'),
+            indexing='ij'
+        )
+        self.volume_indices = torch.stack([x, y, z], dim=-1)
+        
+
+    def forward(self, W: torch.Tensor, K: torch.Tensor):
+        # Determine the in-range points
+        cam_coords, cam_covariances = project_sfm_to_cam_tensor(self.coords, self.covariances, W)
+        mask = (cam_coords[:, 0] > 0) & (cam_coords[:, 1] > 0) & (cam_coords[:, 2] > 0)
+        bounds = mask.nonzero(as_tuple=True)
+        
+        # Determine the bounding box of the in-range points
+        x_min, y_min, z_min = bounds.min(dim=0).values
+        x_max, y_max, z_max = bounds.max(dim=0).values
+        
+        # Project the points to the image space
+        ray_coords, ray_covariances = project_cam_to_ray_tensor(
+            cam_coords[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
+            cam_covariances[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
+        )
+        
+        img_coords, img_covariances = project_ray_to_img_tensor(
+            ray_coords[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
+            ray_covariances[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
+            K
+        )
+        
+        
+
 
 
 class GaussianSplattingModel:
