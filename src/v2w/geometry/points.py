@@ -298,6 +298,24 @@ class ImagePoint(Point):
 
 
 class ImagePoints(Points):
+    def __post_init__(self, device=None, dtype=None):
+        if device is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            device = torch.device(device)
+            
+        # Resolve dtype
+        if dtype is None:
+            dtype = torch.float32
+        else:
+            dtype = torch.as_tensor(1, dtype=dtype).dtype
+            
+        self.coords = torch.empty((0, 2), dtype=dtype, device=device)
+        self.covariances = torch.empty((0, 2, 2), dtype=dtype, device=device)
+        self.colors = torch.empty((0, 3), dtype=dtype, device=device)
+        self.alphas = torch.empty((0), dtype=dtype, device=device)
+    
+    
     def load_from_frame(self, frame: torch.Tensor, depth: torch.Tensor):
         x = torch.arange(frame.shape[0])
         y = torch.arange(frame.shape[1])
@@ -309,6 +327,7 @@ class ImagePoints(Points):
         self.covariances = torch.rand(N, 2, 2)
         self.colors = frame.reshape(-1, 3)
         self.alphas = torch.rand(N)
+                
                 
     def scatter(self, step):
         fig = plt.figure()

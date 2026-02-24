@@ -2,7 +2,8 @@
 Docstring for tests.unit.config.test_loader
 """
 
-from v2w.config.loader import *
+from v2w.config.loader import load_config
+from v2w.config.types import Config
 from pathlib import Path
 
 

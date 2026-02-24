@@ -5,10 +5,8 @@ Dataset split management for Video2World.
 """
 
 from pathlib import Path
-import os
 import numpy as np
 import torch
-import random
 from v2w.io import load_frame_as_numpy, load_frame_csv, load_extrinsics_csv
 from v2w.utils.misc import if_path_exists
 from v2w.utils.math import quat_to_rot_mat
@@ -58,6 +56,11 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
     test_end = val_end + int(N * split_ratios["test"])
     
     for split in splits:
+        # Create split directory if it doesn't exist
+        split_path = Path(split_dir) / split
+        split_path.mkdir(parents=True, exist_ok=True)
+        
+        # Determine the indices for the current split
         match split:
             case "train":
                 split_iter = zip(seqs[:train_end], frame_names[:train_end], translation[:train_end], rotation_q[:train_end])
