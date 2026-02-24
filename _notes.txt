@@ -140,3 +140,259 @@ That’s for scripts and experiment configs.
 ---
 
 If you describe your converter (class-based? CLI tool? model-based? SfM?), I can suggest an exact file + class structure.
+
+
+
+
+
+
+
+=========================================================================================
+=========================================================================================
+=========================================================================================
+=========================================================================================
+=========================================================================================
+=========================================================================================
+=========================================================================================
+=========================================================================================
+=========================================================================================
+
+
+
+
+
+
+I will implement a model in the behalf of point, but I will dynamically activate them partially based on view of a camera. Should I combine weights based on points or points' parameters
+
+This is more of a modeling / representation design question.
+
+You’re saying:
+
+I represent the scene as points
+Only a subset is active depending on camera view
+Should I combine weights based on:
+
+the points themselves?
+
+or the points’ parameters?
+
+Let’s break this down clearly.
+
+🧠 First: What Does “Point” Mean Here?
+
+There are two common interpretations:
+
+1️⃣ Points are data (fixed 3D coordinates)
+
+Example:
+
+(x, y, z) from a point cloud
+
+Only visible points contribute
+
+In this case → points are inputs, not learnable parameters.
+
+2️⃣ Points are learnable primitives
+
+Like:
+
+Neural point rendering
+
+Gaussian splatting style models
+
+Neural radiance field variants
+
+Learned per-point features
+
+In this case → each point has parameters:
+
+position
+
+feature vector
+
+opacity
+
+maybe small MLP weights
+
+This is very different.
+
+🎯 The Core Rule
+
+You should combine point parameters, not weights of the model layers.
+
+Why?
+
+Because:
+
+Model weights = global function
+
+Point parameters = scene representation
+
+If you combine model weights dynamically per view, you are effectively building a mixture-of-experts network, which is usually unnecessary and unstable.
+
+🔥 Correct Pattern (Most Common in View-Dependent Point Models)
+
+Keep a global model
+
+Each point has learnable parameters
+
+Select visible points
+
+Aggregate their parameters
+
+Feed to model
+
+Conceptually:
+
+camera view
+    ↓
+visibility mask
+    ↓
+select subset of points
+    ↓
+aggregate their features
+    ↓
+global network
+    ↓
+render output
+🚀 Practical Architecture
+
+Suppose:
+
+points: (N, 3)              # positions
+features: (N, D)            # learnable
+
+During forward:
+
+visible_mask = compute_visibility(points, camera)
+
+visible_features = features[visible_mask]
+
+combined = aggregation(visible_features)
+
+output = global_network(combined)
+
+This keeps gradients clean and stable.
+
+⚠️ Why Not Combine Model Weights?
+
+If you try something like:
+
+effective_weight = sum_i alpha_i * W_i
+
+Then:
+
+You must store weights per point
+
+Memory explodes
+
+Training becomes unstable
+
+You lose parameter sharing
+
+This is only justified in Mixture-of-Experts or Hypernetwork designs — and that’s advanced.
+
+🧩 When Would You Combine Weights?
+
+Only if:
+
+Each point represents a local function
+
+You are implementing dynamic neural fields
+
+Or hypernetworks generating weights per point
+
+Otherwise: don’t.
+
+🧠 Best Design for View-Dependent Activation
+
+Use:
+
+Masking
+
+Soft attention
+
+Weighted summation
+
+Alpha compositing
+
+Attention pooling
+
+NOT weight interpolation of model layers.
+
+🎯 My Recommendation
+
+If you're doing:
+
+View-dependent rendering
+
+Point-based neural rendering
+
+Scene representation learning
+
+Then:
+
+Combine point features, not model weights.
+
+Let the network stay global and stable.
+
+🔍 To Give You a Precise Answer
+
+Tell me:
+
+Are points fixed or learnable?
+
+Are you rendering images?
+
+Is this similar to NeRF / Gaussian Splatting / point transformer?
+
+Do points have feature vectors?
+
+With that, I can tell you the mathematically correct structure.
+
+
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class PointModel(nn.Module):
+    def __init__(self, num_points=1000, feature_dim=32):
+        super().__init__()
+
+        # Learnable scene representation
+        self.points = nn.Parameter(torch.randn(num_points, 3))
+        self.features = nn.Parameter(torch.randn(num_points, feature_dim))
+
+        # Global shared network
+        self.mlp = nn.Sequential(
+            nn.Linear(feature_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 3)  # RGB output example
+        )
+
+    def compute_visibility(self, camera_pos):
+        """
+        Dummy visibility function.
+        Replace with real projection/frustum test.
+        """
+        # distance-based soft visibility
+        dist = torch.norm(self.points - camera_pos, dim=1)
+        weights = torch.exp(-dist)  # (N,)
+        return weights
+
+    def forward(self, camera_pos):
+        # 1️⃣ Compute visibility weights
+        weights = self.compute_visibility(camera_pos)  # (N,)
+
+        # 2️⃣ Weighted aggregation of features
+        weights = weights.unsqueeze(1)  # (N,1)
+        aggregated = torch.sum(weights * self.features, dim=0)  # (D,)
+
+        # 3️⃣ Pass through global network
+        output = self.mlp(aggregated)
+
+        return output
+        
+

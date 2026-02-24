@@ -1,6 +1,7 @@
 #include <torch/extension.h>
 #include "splat_kernel.cuh"
 
+
 torch::Tensor gaussian_splat(
     torch::Tensor img,
     torch::Tensor mu,

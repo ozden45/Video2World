@@ -11,11 +11,14 @@ from v2w.geometry.points import ImagePoint, ImagePoints
 
 
 class PointModel(nn.Module):
-    def __init__(self, img_pts: ImagePoint):
+    def __init__(self, img_pts: ImagePoints):
         super().__init__()
         
-
-
+        # Learnable parameters for each point
+        self.coords = nn.Parameter(img_pts.coords) 
+        self.covariances = nn.Parameter(img_pts.covariances)
+        self.colors = nn.Parameter(img_pts.colors)
+        self.alphas = nn.Parameter(img_pts.alphas)
 
 
 class GaussianSplattingModel:
@@ -53,3 +56,50 @@ class GaussianSplattingModel:
 
 
 
+
+
+
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class PointModel(nn.Module):
+    def __init__(self, num_points=1000, feature_dim=32):
+        super().__init__()
+
+        # Learnable scene representation
+        self.points = nn.Parameter(torch.randn(num_points, 3))
+        self.features = nn.Parameter(torch.randn(num_points, feature_dim))
+
+        # Global shared network
+        self.mlp = nn.Sequential(
+            nn.Linear(feature_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 3)  # RGB output example
+        )
+
+    def compute_visibility(self, camera_pos):
+        """
+        Dummy visibility function.
+        Replace with real projection/frustum test.
+        """
+        # distance-based soft visibility
+        dist = torch.norm(self.points - camera_pos, dim=1)
+        weights = torch.exp(-dist)  # (N,)
+        return weights
+
+    def forward(self, camera_pos):
+        # 1️⃣ Compute visibility weights
+        weights = self.compute_visibility(camera_pos)  # (N,)
+
+        # 2️⃣ Weighted aggregation of features
+        weights = weights.unsqueeze(1)  # (N,1)
+        aggregated = torch.sum(weights * self.features, dim=0)  # (D,)
+
+        # 3️⃣ Pass through global network
+        output = self.mlp(aggregated)
+
+        return output
+    
