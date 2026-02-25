@@ -86,22 +86,3 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
             dest_path = Path(split_dir) / split / f"{frame_name}.npz" 
             _save_sample_tum_vi(dest_path, seq, frame, extrinsics)    
         
-        
-        # Convert quaternion to rotation matrix
-        rotation = quat_to_rot_mat(rotation_q)
-        
-        # Combine translation and rotation into extrinsics
-        extrinsics = torch.cat([
-            torch.tensor(rotation),
-            torch.tensor(translation)
-            ], dim=1)
-
-        # Load frame
-        frame_path = img_dir / frame_name
-        frame = load_frame_as_numpy(frame_path)
-
-        # Save the sample to the corresponding split directory
-        dest_path = Path(split_dir) / split / f"{frame_name}.npz" 
-        _save_sample_tum_vi(dest_path, frame, extrinsics)
-
-        
