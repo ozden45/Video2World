@@ -7,7 +7,7 @@ This module contains functions for reconstructing 3D points from video frames.
 
 import torch
 from v2w.geometry.points import ImagePoints, SFMPoints, SFMPointCloud
-from v2w.utils.misc import if_path_exists
+from v2w.utils.misc import is_path_exists
 
 
 def video_to_3d_points(frames_path: str | Path) -> SFMPointCloud:
@@ -16,7 +16,7 @@ def video_to_3d_points(frames_path: str | Path) -> SFMPointCloud:
     """
 
     # Check if the frames path exists
-    if not if_path_exists(frames_path):
+    if not is_path_exists(frames_path):
         raise FileNotFoundError(f"Frames path {frames_path} does not exist.")
     
     # 

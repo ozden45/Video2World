@@ -15,7 +15,7 @@ def _deep_merge(a: dict, b: dict) -> dict:
     return out
 
 
-def if_path_exists(path: str | Path) -> bool:
+def is_path_exists(path: str | Path) -> bool:
     if isinstance(path, str) and not os.path.exists(path):
         return False
     elif isinstance(path, Path) and not path.exists():

@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from v2w.io import load_frame_as_numpy, load_frame_csv, load_extrinsics_csv
-from v2w.utils.misc import if_path_exists
+from v2w.utils.misc import is_path_exists
 from v2w.utils.math import quat_to_rot_mat
 
 
@@ -30,7 +30,7 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
         split_ratios: A dictionary defining the ratios for each split, e.g., {"train": 0.7, "val": 0.15, "test": 0.15}.
     """
     # Check if the dataset root exists
-    if not if_path_exists(root):
+    if not is_path_exists(root):
         raise FileNotFoundError(f"TUM VI dataset root directory '{root}' not found.")
     
     # Define the splits

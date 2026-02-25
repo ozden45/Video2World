@@ -5,12 +5,12 @@ import yaml
 import numpy as np
 import pandas as pd
 from typing import List, Tuple
-from v2w.utils.misc import if_path_exists
+from v2w.utils.misc import is_path_exists
 
 
 
 def load_frame_as_tensor(path: str | Path) -> torch.Tensor:
-    if not if_path_exists(path):
+    if not is_path_exists(path):
         raise FileNotFoundError(f"The path {path} is not found")
     
     frame = cv.imread(path)
@@ -20,7 +20,7 @@ def load_frame_as_tensor(path: str | Path) -> torch.Tensor:
 
 
 def load_frame_as_numpy(path: str | Path) -> np.ndarray:
-    if not if_path_exists(path):
+    if not is_path_exists(path):
         raise FileNotFoundError(f"The path {path} is not found")
     
     frame = cv.imread(path)
@@ -31,7 +31,7 @@ def load_frame_as_numpy(path: str | Path) -> np.ndarray:
 
 def load_frame_csv(path: str | Path) -> Tuple[List[str], List[str]]:
     # Check if the file exists
-    if not if_path_exists(path):
+    if not is_path_exists(path):
         raise FileNotFoundError(f"The path '{path}' is not found.")
     
     # Load the CSV file into a DataFrame
@@ -45,7 +45,7 @@ def load_frame_csv(path: str | Path) -> Tuple[List[str], List[str]]:
 
 
 def load_extrinsics_csv(path: str | Path) -> Tuple[List[List[float]], List[List[float]], List[List[float]]]:
-    if not if_path_exists(path):
+    if not is_path_exists(path):
         raise FileNotFoundError(f"The path '{path}' is not found.")
 
     # Load the CSV file into a DataFrame
@@ -94,7 +94,7 @@ def load_intrinsic_mat() -> torch.Tensor:
     
 
 def load_yaml(path: str | Path) -> dict:
-    if not if_path_exists(path):
+    if not is_path_exists(path):
         raise FileNotFoundError(f"The path {path} is not found")
     
     with open(path) as f:
@@ -102,7 +102,7 @@ def load_yaml(path: str | Path) -> dict:
 
 
 def load_npy(path: str | Path) -> torch.Tensor:
-    if not if_path_exists(path):
+    if not is_path_exists(path):
         raise FileNotFoundError(f"The path {path} is not found")
     
     depth = np.load(path)

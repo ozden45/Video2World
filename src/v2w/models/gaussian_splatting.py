@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from dataclasses import dataclass
 from typing import Tuple
-from v2w.geometry.points import PointCloud
+from v2w.geometry.points import SFMPointCloud
 from v2w.rendering.rasterizer import rasterize
 from v2w.exception import ShapeError
 
@@ -28,7 +28,7 @@ class VGNeRFConfig:
 
 
 class VGNeRF(nn.Module):
-    def __init__(self, pts_cloud: PointCloud, config: VGNeRFConfig):
+    def __init__(self, pts_cloud: SFMPointCloud, config: VGNeRFConfig):
         super().__init__()
         self.config = config
         

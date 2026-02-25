@@ -13,6 +13,7 @@ import torch
 from dataclasses import dataclass, field, InitVar
 from typing import Union
 import matplotlib.pyplot as plt
+from v2w.utils.misc import is_path_exists
 from v2w.exception import ShapeError
 
 
@@ -274,7 +275,7 @@ class SFMPoints(Points):
 
     
 class SFMPointCloud(PointCloud):
-    pass
+    def _create_voxel_volume_from_video(self)
 
 
 class CamPoint(Point):
