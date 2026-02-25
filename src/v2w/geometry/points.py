@@ -15,6 +15,7 @@ from typing import Union
 import matplotlib.pyplot as plt
 from pathlib import Path
 import logging
+from v2w.geometry.reconstruction import reconstruct_img_to_sfm
 from v2w.io import load_frame_as_tensor
 from v2w.utils.misc import is_path_exists
 from v2w.exception import ShapeError
@@ -278,7 +279,7 @@ class SFMPoints(Points):
 
     
 class SFMPointCloud(PointCloud):
-    def _create_voxel_volume_from_video(self, video_path: str):
+    def create_voxel_volume_from_video(self, video_path: str):
         # Check if video path exists
         if not is_path_exists(video_path):
             raise FileNotFoundError(f"Video file not found: '{video_path}'.")
@@ -289,6 +290,8 @@ class SFMPointCloud(PointCloud):
         logging.info(f"Loading video frames from '{video_path}'.")
         for file in files:
             frame = load_frame_as_tensor(file)
+            depth = None
+            img_pts = ImagePoints.load_from_frame(frame, depth)
             
 
 
