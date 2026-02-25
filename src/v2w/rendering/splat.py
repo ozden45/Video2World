@@ -8,7 +8,6 @@ from torch.utils.cpp_extension import load
 import os
 from pathlib import Path
 from typing import Tuple
-from v2w.geometry.points import ImagePoints
 
 
 if torch.cuda.is_available():
@@ -54,11 +53,6 @@ def gaussian_splat(
     Returns:
         torch.Tensor: The splatted image of shape (H, W, 3).
     """
-    
-    mu = img_pts.coords
-    inv_cov = img_pts.covariances
-    clr = img_pts.colors.float() / 255.0
-    alpha = img_pts.alphas.float()
     
     return gaussian_splat_ext.gaussian_splat(
         img=img,

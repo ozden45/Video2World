@@ -7,14 +7,30 @@ This script includes an implementation of Gaussian splatting using Pytorch.
 
 import torch
 import torch.nn as nn
+from dataclasses import dataclass
+from typing import Tuple
 from v2w.geometry.points import PointCloud
-from v2w.geometry.projection import project_sfm_to_cam_tensor, project_cam_to_ray_tensor, project_ray_to_img_tensor
-#from v2w.rendering.rasterizer
+from v2w.rendering.rasterizer import rasterize
+from v2w.exception import ShapeError
 
 
-class PointCloudModel(nn.Module):
-    def __init__(self, pts_cloud: PointCloud):
+@dataclass
+class VGNeRFConfig:
+    img_size: Tuple[int, int]
+    bounds: Tuple[Tuple[int, int, int], Tuple[int, int, int]]
+    res: Tuple[int, int, int]
+    index_bounds: Tuple[int, int, int]
+    nsigma: int
+    K: torch.Tensor
+    
+    def __post_init__(self):
+        pass
+
+
+class VGNeRF(nn.Module):
+    def __init__(self, pts_cloud: PointCloud, config: VGNeRFConfig):
         super().__init__()
+        self.config = config
         
         # Learnable parameters for each point
         self.coords = nn.Parameter(pts_cloud.coords)
@@ -32,28 +48,20 @@ class PointCloudModel(nn.Module):
         self.volume_indices = torch.stack([x, y, z], dim=-1)
         
 
-    def forward(self, W: torch.Tensor, K: torch.Tensor):
-        # Determine the in-range points
-        cam_coords, cam_covariances = project_sfm_to_cam_tensor(self.coords, self.covariances, W)
-        mask = (cam_coords[:, 0] > 0) & (cam_coords[:, 1] > 0) & (cam_coords[:, 2] > 0)
-        bounds = mask.nonzero(as_tuple=True)
-        
-        # Determine the bounding box of the in-range points
-        x_min, y_min, z_min = bounds.min(dim=0).values
-        x_max, y_max, z_max = bounds.max(dim=0).values
-        
-        # Project the points to the image space
-        ray_coords, ray_covariances = project_cam_to_ray_tensor(
-            cam_coords[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
-            cam_covariances[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
+    def forward(self, W: torch.Tensor) -> torch.Tensor:
+        # Rasterize the point cloud into a 2D image
+        img = rasterize(
+            sfm_coords=self.coords,
+            sfm_covs=self.covariances,
+            sfm_colors=self.colors,
+            sfm_alphas=self.alphas,
+            W=W,
+            K=self.config.K,
+            img_size=self.config.img_size,
+            nsigma=self.config.nsigma
         )
         
-        img_coords, img_covariances = project_ray_to_img_tensor(
-            ray_coords[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
-            ray_covariances[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
-            K
-        )
-        
+        return img
         
 
 

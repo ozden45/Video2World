@@ -8,40 +8,34 @@ import torch
 import sympy as sp
 import math
 from typing import Tuple
+from v2w.exception import ShapeError
 
 
-def sh_color_channel(view: Tuple[float, float], c_lm: torch.Tensor, sgd_scale: float = 10.0) -> int:
+def _sh_color_channel(view: Tuple[float, float], c_lm: torch.Tensor, sgd_scale: float = 10.0) -> int:
     """
     Calculate the spherical harmonics lighting coefficients based on the view direction.
     Args:
         view (Tuple[float, float]): A tuple containing the azimuth and elevation angles in radians.
+        c_lm: (torch.Tensor): The spherical harmonics coefficients for single color channel of shape (N, 9).
     Returns:
         float: The calculated spherical harmonics lighting coefficients.
     """
 
-    theta, phi = view
-    #if theta < 0 or theta > torch.pi:
-    #    raise ValueError("Theta must be in [0, pi] and phi must be in [0, 2pi]")
-    #if phi < 0 or phi > 2 * torch.pi:
-    #    raise ValueError("Phi must be in [0, 2pi]")
-    if c_lm.shape != (9,):
-        raise ValueError("c_lm must be a tensor of shape (9,1)")
-
     # Calculate lighting term
     v = view
     Y_lm = torch.Tensor([
-        sh(v,0,0), 
-        sh(v,1,-1), sh(v,1,0), sh(v,1,1), 
-        sh(v,2,-2), sh(v,2,-1), sh(v,2,0), sh(v,2,1), sh(v,2,2)
+        _sh(v, 0, 0), 
+        _sh(v, 1, -1), _sh(v, 1, 0), _sh(v, 1, 1), 
+        _sh(v, 2, -2), _sh(v, 2, -1), _sh(v, 2, 0), _sh(v, 2, 1), _sh(v, 2, 2)
         ])
-    C = (c_lm * Y_lm).sum()
+    C = torch.einsum('ni,i->n', c_lm, Y_lm)
     C = torch.sigmoid(C / sgd_scale) * 255
 
     return int(C)
     
 
 
-def sh(view: Tuple[float, float], l: int, m: int) -> float:
+def _sh(view: Tuple[float, float], l: int, m: int) -> float:
     """
     Calculate the spherical harmonics basis functions up to the 2nd order.
     Args:
@@ -73,18 +67,12 @@ def sh_color(view: Tuple[float, float], c_lm_rgb: torch.Tensor) -> torch.Tensor:
         float: The calculated spherical harmonics lighting coefficients.
     """
     
-    #if theta < 0 or theta > torch.pi:
-    #    raise ValueError("Theta must be in [0, pi] and phi must be in [0, 2pi]")
-    #if phi < 0 or phi > 2 * torch.pi:
-    #    raise ValueError("Phi must be in [0, 2pi]")
-    if c_lm_rgb.shape != (3, 9):
-        raise ValueError(f"c_lm_rgb must be a tuple of three tensors for R, G, B channels: {c_lm_rgb.shape}")
-    if c_lm_rgb[0].shape != (9,) or c_lm_rgb[1].shape != (9,) or c_lm_rgb[2].shape != (9,):
-        raise ValueError(f"c_lm must be a tensor of shape (9,1): | {c_lm_rgb[0].shape}, {c_lm_rgb[1].shape}, {c_lm_rgb[2].shape}|")
+    if c_lm_rgb.shape[0] != (3, 9):
+        raise ShapeError(f"c_lm_rgb must be a tuple of three tensors for R, G, B channels: {c_lm_rgb.shape}")
     
-    C_R = sh_color_channel(view, c_lm_rgb[0])
-    C_G = sh_color_channel(view, c_lm_rgb[1])
-    C_B = sh_color_channel(view, c_lm_rgb[2])
+    C_R = _sh_color_channel(view, c_lm_rgb[:, 0, :])
+    C_G = _sh_color_channel(view, c_lm_rgb[:, 1, :])
+    C_B = _sh_color_channel(view, c_lm_rgb[:, 2, :])
 
     return (C_R, C_G, C_B)
 
