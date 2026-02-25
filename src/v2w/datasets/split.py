@@ -35,7 +35,7 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
     
     # Define the splits
     splits = ["train", "val", "test"]
-
+    
     # Define paths
     cam1_dir = Path(root) / "mav0" / "cam1"
     mocap0_dir = Path(root) / "mav0" / "mocap0"
@@ -48,7 +48,7 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
     # Load extrinsics from the mocap CSV file    
     ext_csv = Path(mocap0_dir) / "data.csv"
     _, translation, rotation_q = load_extrinsics_csv(ext_csv)
-
+    
     # Get split indices based on the provided ratios
     N = len(frame_names)
     train_end = int(N * split_ratios["train"])
@@ -75,7 +75,7 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
                         
             # Combine translation and rotation into extrinsics
             rot_tensor = torch.tensor(rot)
-            tr_tensor = torch.tensor(tr)
+            tr_tensor = torch.tensor(tr).unsqueeze(-1)
             extrinsics = torch.cat([rot_tensor, tr_tensor], dim=1)
             
             # Load frame

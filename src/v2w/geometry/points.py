@@ -10,13 +10,14 @@ Created: 2026-01-28
 
 from __future__ import annotations
 import torch
+import numpy as np
 from dataclasses import dataclass, field, InitVar
 from typing import Union
 import matplotlib.pyplot as plt
 from pathlib import Path
 import logging
 from v2w.geometry.reconstruction import reconstruct_img_to_sfm
-from v2w.io import load_frame_as_tensor
+from v2w.io import load_frame_as_tensor, load_intrinsic_mat
 from v2w.utils.misc import is_path_exists
 from v2w.exception import ShapeError
 
@@ -138,8 +139,13 @@ class Points:
         return torch.stack([mins, maxs], dim=1)
     
 
+@dataclass
 class PointCloud:
-    def __init__(
+    bounds: torch.Tensor
+    res: torch.Tensor
+    device: torch.device
+    
+    def __post_init__(
         self,
         bounds: torch.Tensor,
         res: torch.Tensor,
@@ -279,22 +285,32 @@ class SFMPoints(Points):
 
     
 class SFMPointCloud(PointCloud):
-    def create_voxel_volume_from_video(self, video_path: str):
+    def create_volume_from_video_frames(self, frame_path: str):
         # Check if video path exists
-        if not is_path_exists(video_path):
-            raise FileNotFoundError(f"Video file not found: '{video_path}'.")
+        if not is_path_exists(frame_path):
+            raise FileNotFoundError(f"Frames are not found in: '{frame_path}'.")
         
-        path = Path(video_path)
+        path = Path(frame_path)
         files = sorted(path.glob("*.png"))
         
-        logging.info(f"Loading video frames from '{video_path}'.")
+        K = load_intrinsic_mat()
+        
+        sfm_pts = SFMPoints()
+        
+        logging.info(f"Loading video frames from '{frame_path}'.")
         for file in files:
-            frame = load_frame_as_tensor(file)
+            sample = np.load(file)
+            
+            frame = torch.from_numpy(sample['frame'])
+            W = sample['extrinsics']
+            
             depth = None
             img_pts = ImagePoints.load_from_frame(frame, depth)
-            
+            sfm_pts += reconstruct_img_to_sfm(img_pts, W, K)
 
-
+        self.add(sfm_pts)
+        
+        
 
 class CamPoint(Point):
     pass
