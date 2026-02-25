@@ -13,6 +13,9 @@ import torch
 from dataclasses import dataclass, field, InitVar
 from typing import Union
 import matplotlib.pyplot as plt
+from pathlib import Path
+import logging
+from v2w.io import load_frame_as_tensor
 from v2w.utils.misc import is_path_exists
 from v2w.exception import ShapeError
 
@@ -275,7 +278,19 @@ class SFMPoints(Points):
 
     
 class SFMPointCloud(PointCloud):
-    def _create_voxel_volume_from_video(self)
+    def _create_voxel_volume_from_video(self, video_path: str):
+        # Check if video path exists
+        if not is_path_exists(video_path):
+            raise FileNotFoundError(f"Video file not found: '{video_path}'.")
+        
+        path = Path(video_path)
+        files = sorted(path.glob("*.png"))
+        
+        logging.info(f"Loading video frames from '{video_path}'.")
+        for file in files:
+            frame = load_frame_as_tensor(file)
+            
+
 
 
 class CamPoint(Point):
