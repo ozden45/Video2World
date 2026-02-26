@@ -5,6 +5,7 @@ import yaml
 import numpy as np
 import pandas as pd
 from typing import List, Tuple
+from v2w.config.loader import load_cam_config
 from v2w.utils.misc import is_path_exists
 
 
@@ -78,7 +79,7 @@ def load_intrinsic_mat() -> torch.Tensor:
     
     # Read cam config file
     path = Path(__file__).resolve().parents[2] / "configs/cam.yaml"
-    cfg = load_config(path)
+    cfg = load_cam_config(path)
 
     f_mm = cfg.camera.intrinsic.f_mm
     sensor_width_mm = cfg.camera.intrinsic.sensor_width_mm

@@ -7,6 +7,9 @@ Camera geometry and projection utilities
 
 import torch
 from typing import Tuple
+from dataclasses import dataclass, classmethod
+from v2w.config.loader import load_cam_config
+from v2w.config.types import CamConfig
 
 
 def extrinsic_to_view(R: torch.Tensor) -> Tuple[float, float]:
@@ -23,3 +26,19 @@ def extrinsic_to_view(R: torch.Tensor) -> Tuple[float, float]:
     elevation = torch.asin(view_dir[1])  # asin(y)
     
     return azimuth.item(), elevation.item()
+
+
+
+class Camera:
+    def __init__(self, cfg: CamConfig):
+        self.config = cfg
+        self.intrinsics = self._set_intrinsics()
+        
+    def _set_intrinsics(self) -> torch.Tensor:
+        
+    
+    @property
+    def intrinsics(self):
+        
+
+

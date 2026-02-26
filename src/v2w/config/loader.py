@@ -12,9 +12,54 @@ Responsible for:
 from pathlib import Path
 import yaml
 from dataclasses import asdict
-from v2w.config.types import Config
+from v2w.config.types import CamConfig, DatasetConfig, ModelConfig, TrainConfig
 from v2w.io import load_yaml
-from v2w.utils.misc import _deep_merge, is_path_exists
+from v2w.utils.misc import is_path_exists
+
+
+
+def load_cam_config(path: str | Path) -> CamConfig:
+    """Load camera configuration"""
+    
+    # Check that path exists
+    if not is_path_exists(path):
+        raise FileNotFoundError(f"The path {path} is not found")
+
+    raw = load_yaml(path)
+    return CamConfig.from_dict(raw)
+
+
+def load_dataset_config(path: str | Path) -> DatasetConfig:
+    """Load camera configuration"""
+    
+    # Check that path exists
+    if not is_path_exists(path):
+        raise FileNotFoundError(f"The path {path} is not found")
+
+    raw = load_yaml(path)
+    return DatasetConfig.from_dict(raw)
+
+
+def load_model_config(path: str | Path) -> ModelConfig:
+    """Load camera configuration"""
+    
+    # Check that path exists
+    if not is_path_exists(path):
+        raise FileNotFoundError(f"The path {path} is not found")
+
+    raw = load_yaml(path)
+    return ModelConfig.from_dict(raw)
+
+
+def load_train_config(path: str | Path) -> TrainConfig:
+    """Load camera configuration"""
+    
+    # Check that path exists
+    if not is_path_exists(path):
+        raise FileNotFoundError(f"The path {path} is not found")
+
+    raw = load_yaml(path)
+    return TrainConfig.from_dict(raw)
 
 
 def load_config(path: str | Path) -> Config:
@@ -28,22 +73,8 @@ def load_config(path: str | Path) -> Config:
     return Config.from_dict(raw)
 
 
-def load_many_config(paths: list[str | Path]) -> Config:
-    """Load and merge multiple yaml files."""
-    merged = {}
-
-    for path in paths:
-        # Check that path exists
-        if not is_path_exists(path):
-            raise FileNotFoundError(f"The path {path} is not found")
-        
-        merged = _deep_merge(merged, _read_yaml(p))
-
-    return Config.from_dict(merged)
-
-
 def save_config(cfg: Config, path: str | Path):
-    """Save config to yaml (for experiment reproducibility)."""
+    """Save config to yaml for experiment reproducibility."""
     
     # Check that path exists
     if not is_path_exists(path):
