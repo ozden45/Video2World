@@ -134,7 +134,7 @@ class VolumeReconstructor:
 
     def __init__(
         self,
-        intrinsics: np.ndarray,
+        intrinsics: torch.Tensor,
         device: Optional[torch.device] = None,
     ):
         """
@@ -145,9 +145,6 @@ class VolumeReconstructor:
         self.K = intrinsics
         self.device = device
 
-    # ------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------
 
     def reconstruct_from_directory(
         self,
@@ -175,6 +172,14 @@ class VolumeReconstructor:
 
         return sfm_pcd
 
+
+    def reconstruct_from_dataset(self):
+        raise NotImplementedError
+    
+    def reconstruct_from_stream(self):
+        raise NotImplementedError
+    
+    
     # ------------------------------------------------------------
     # Internal Methods
     # ------------------------------------------------------------
