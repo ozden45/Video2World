@@ -198,43 +198,32 @@ class PointCloud:
         colors = points.colors.to(self.device)
         alphas = points.alphas.to(self.device)
         
+        
+        # FIXME: Handle the point duplication with downsampling 
+        # by resolution.
+        
+        
+        
         # Compute voxel indices
         indices = ((coords - self.bounds[:, 0]) / self.res).floor().long()
         
         # Remove out-of-bounds points
-        valid_mask = ((indices >= 0) & (indices < self.shape)).all(dim=1)
+        mask = ((indices >= 0) & (indices < self.shape)).all(dim=1)
         
-        indices = indices[valid_mask]
-        coords = coords[valid_mask]
-        covs = covs[valid_mask]
-        colors = colors[valid_mask]
-        alphas = alphas[valid_mask]
+        indices = indices[mask]
+        coords = coords[mask]
+        covs = covs[mask]
+        colors = colors[mask]
+        alphas = alphas[mask]
         
-        x_idx, y_idx, z_idx = indices[:, 0], indices[:, 1], indices[:, 2]
-
-        self.coords[x_idx, y_idx, z_idx] = coords
-        self.covariances[x_idx, y_idx, z_idx] = covs
-        self.colors[x_idx, y_idx, z_idx] = colors
-        self.alphas[x_idx, y_idx, z_idx] = alphas
-
+        # Add new points
+        self.coords = torch.cat([self.coords, coords], dim=0)
+        self.covariances = torch.cat([self.covariances, covs], dim=0)
+        self.colors = torch.cat([self.colors, colors], dim=0)
+        self.alphas = torch.cat([self.alphas, alphas], dim=0)
+        
         self.indices = torch.cat([self.indices, indices], dim=0)
         self.indices = torch.unique(self.indices, dim=0, sorted=True)
-
-    def get_filled_voxels(self) -> Points:
-        """
-        Returns all occupied voxel data as compact tensor.
-        """
-        if self.indices.shape[0] == 0:
-            return None
-        
-        x, y, z = self.indices.T
-        
-        return Points(
-            coords=self.coords[x, y, z],
-            covariances=self.covariances[x, y, z],
-            colors=self.colors[x, y, z],
-            alphas=self.alphas[x, y, z]
-        )
 
     def show(self):
         fig = plt.figure()
