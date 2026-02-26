@@ -141,6 +141,7 @@ class Points:
 class PointCloud:
     bounds: torch.Tensor
     res: torch.Tensor
+    downsampling_digit: int
     device: torch.device
     
     def __post_init__(self):
@@ -166,43 +167,34 @@ class PointCloud:
         return dims.to(torch.long)
 
     def _allocate_storage(self) -> None:
-        x_dim, y_dim, z_dim = self.shape.tolist()
-
-        self.coords = torch.zeros(
-            (x_dim, y_dim, z_dim, 3),
-            dtype=torch.float32,
-            device=self.device,
-        )
-
-        self.covariances = torch.zeros(
-            (x_dim, y_dim, z_dim, 3, 3),
-            dtype=torch.float32,
-            device=self.device,
-        )
-
-        self.colors = torch.zeros(
-            (x_dim, y_dim, z_dim, 3),
-            dtype=torch.uint8,
-            device=self.device,
-        )
-
-        self.alphas = torch.zeros(
-            (x_dim, y_dim, z_dim),
-            dtype=torch.float32,
-            device=self.device,
-        )
+        self.coords = torch.empty((0, 3), dtype=torch.float32, device=self.device)
+        self.covariances = torch.empty((0, 3, 3), dtype=torch.float32, device=self.device)
+        self.colors = torch.empty((0, 3, 9), dtype=torch.uint8, device=self.device)
+        self.alphas = torch.empty((0, ), dtype=torch.float32, device=self.device)
 
     def add_pts(self, points: Points) -> None:
+        # Set the device same as the point cloud
         coords = points.coords.to(self.device)
         covs = points.covariances.to(self.device)
         colors = points.colors.to(self.device)
         alphas = points.alphas.to(self.device)
         
+        # Downsample points based on coordinates
+        factor = 10 ** self.downsampling_digit
+        coords = torch.floor(coords * factor) / factor
+        unique_coords, inverse = torch.unique(coords, dim=0, return_inverse=True)
         
-        # FIXME: Handle the point duplication with downsampling 
-        # by resolution.
+        indices = torch.arange(len(coords))
+        first_indices = torch.full_like(unique_coords, len(coords))
+
+        first_indices = first_indices.scatter_reduce(
+            0, inverse, indices, reduce="amin"
+        ).sort().values
         
-        
+        coords = unique_coords
+        covs = covs[first_indices]
+        colors = colors[first_indices]
+        alphas = alphas[first_indices]
         
         # Compute voxel indices
         indices = ((coords - self.bounds[:, 0]) / self.res).floor().long()
@@ -221,6 +213,12 @@ class PointCloud:
         self.covariances = torch.cat([self.covariances, covs], dim=0)
         self.colors = torch.cat([self.colors, colors], dim=0)
         self.alphas = torch.cat([self.alphas, alphas], dim=0)
+        
+        # Remove duplicate points
+        self.coords = torch.unique(self.coords, dim=0)
+        self.covariances = torch.unique(self.covariances, dim=0)
+        self.colors = torch.unique(self.colors, dim=0)
+        self.alphas = torch.unique(self.alphas, dim=0)
         
         self.indices = torch.cat([self.indices, indices], dim=0)
         self.indices = torch.unique(self.indices, dim=0, sorted=True)
