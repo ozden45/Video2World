@@ -38,23 +38,13 @@ def rasterize(
     # Determine the in-range points
     cam_coords, cam_covs = project_sfm_to_cam_tensor(sfm_coords, sfm_covs, W)
     mask = (cam_coords[:, 0] > 0) & (cam_coords[:, 1] > 0) & (cam_coords[:, 2] > 0)
-    bounds = mask.nonzero(as_tuple=True)
     
-    # Determine the bounding box of the in-range points
-    x_min, y_min, z_min = bounds.min(dim=0).values
-    x_max, y_max, z_max = bounds.max(dim=0).values
+    # Mask the in-range points
+    cam_coords, cam_covs = cam_coords[mask], cam_covs[mask]
     
     # Project the points to the image space
-    ray_coords, ray_covariances = project_cam_to_ray_tensor(
-        cam_coords[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
-        cam_covs[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
-    )
-    
-    img_coords, img_covs = project_ray_to_img_tensor(
-        ray_coords[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
-        ray_covariances[x_min:x_max+1, y_min:y_max+1, z_min:z_max+1],
-        K
-    )
+    ray_coords, ray_covariances = project_cam_to_ray_tensor(cam_coords, cam_covs)
+    img_coords, img_covs = project_ray_to_img_tensor(ray_coords, ray_covariances, K)
         
     # Calculate the view direction
     view = extrinsic_to_view(W[:3, :3])

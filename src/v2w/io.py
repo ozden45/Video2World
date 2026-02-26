@@ -77,7 +77,7 @@ def load_intrinsic_mat() -> torch.Tensor:
     
     
     # Read cam config file
-    path = Path(__file__).resolve().parents[3] / "configs/cam_config.yaml"
+    path = Path(__file__).resolve().parents[2] / "configs/cam.yaml"
     cfg = load_config(path)
 
     f_mm = cfg.camera.intrinsic.f_mm

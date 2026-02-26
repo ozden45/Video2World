@@ -6,7 +6,11 @@ Functions for reconstructing image pixel to
 """
 
 import torch
-from v2w.geometry.points import SFMPoints, CamPoints, RayPoints, ImagePoints
+import numpy as np
+from pathlib import Path
+from v2w.geometry.points import SFMPoints, CamPoints, RayPoints, ImagePoints, SFMPointCloud
+from v2w.io import load_intrinsic_mat
+from v2w.utils.misc import is_path_exists
 
 
 def reconstruct_img_to_ray(img_pts: ImagePoints, K: torch.Tensor) -> RayPoints:
@@ -111,3 +115,28 @@ def reconstruct_img_to_sfm(img_pts: ImagePoints, W: torch.Tensor, K: torch.Tenso
     sfm_pts = reconstruct_cam_to_sfm(cam_pts, W)
     
     return sfm_pts
+
+
+def reconstruct_volume_from_video_frames(sfm_pcd: SFMPointCloud, frame_path: str):
+    # Check if video path exists
+    if not is_path_exists(frame_path):
+        raise FileNotFoundError(f"Frames are not found in: '{frame_path}'.")
+        
+    path = Path(frame_path)
+    files = sorted(path.glob("*.png"))
+    
+    K = load_intrinsic_mat()
+    
+    sfm_pts = SFMPoints()
+    for file in files:
+        sample = np.load(file)
+        
+        frame = torch.from_numpy(sample['frame'])
+        W = sample['extrinsics']
+        
+        depth = None
+        img_pts = ImagePoints.load_from_frame(frame, depth)
+        sfm_pts += reconstruct_img_to_sfm(img_pts, W, K)
+
+        sfm_pcd.add(sfm_pts)
+

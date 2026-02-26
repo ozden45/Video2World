@@ -16,9 +16,7 @@ from typing import Union
 import matplotlib.pyplot as plt
 from pathlib import Path
 import logging
-from v2w.geometry.reconstruction import reconstruct_img_to_sfm
-from v2w.io import load_frame_as_tensor, load_intrinsic_mat
-from v2w.utils.misc import is_path_exists
+import open3d as o3d
 from v2w.exception import ShapeError
 
 
@@ -145,18 +143,11 @@ class PointCloud:
     res: torch.Tensor
     device: torch.device
     
-    def __post_init__(
-        self,
-        bounds: torch.Tensor,
-        res: torch.Tensor,
-        device: Union[str, torch.device] = "cuda"
-    ):
-        self.device = torch.device(device)
+    def __post_init__(self):
+        self._validate_inputs(self.bounds, self.res)
 
-        self._validate_inputs(bounds, res)
-
-        self.bounds = bounds.to(self.device, dtype=torch.float32)
-        self.res = res.to(self.device, dtype=torch.float32).squeeze()
+        self.bounds = self.bounds.to(self.device, dtype=torch.float32)
+        self.res = self.res.to(self.device, dtype=torch.float32).squeeze()
 
         self.shape = self._compute_shape()
         self._allocate_storage()
@@ -201,7 +192,7 @@ class PointCloud:
             device=self.device,
         )
 
-    def add(self, points: Points) -> None:
+    def add_pts(self, points: Points) -> None:
         coords = points.coords.to(self.device)
         covs = points.covariances.to(self.device)
         colors = points.colors.to(self.device)
@@ -285,32 +276,7 @@ class SFMPoints(Points):
 
     
 class SFMPointCloud(PointCloud):
-    def create_volume_from_video_frames(self, frame_path: str):
-        # Check if video path exists
-        if not is_path_exists(frame_path):
-            raise FileNotFoundError(f"Frames are not found in: '{frame_path}'.")
-        
-        path = Path(frame_path)
-        files = sorted(path.glob("*.png"))
-        
-        K = load_intrinsic_mat()
-        
-        sfm_pts = SFMPoints()
-        
-        logging.info(f"Loading video frames from '{frame_path}'.")
-        for file in files:
-            sample = np.load(file)
-            
-            frame = torch.from_numpy(sample['frame'])
-            W = sample['extrinsics']
-            
-            depth = None
-            img_pts = ImagePoints.load_from_frame(frame, depth)
-            sfm_pts += reconstruct_img_to_sfm(img_pts, W, K)
-
-        self.add(sfm_pts)
-        
-        
+    pass
 
 class CamPoint(Point):
     pass

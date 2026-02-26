@@ -38,15 +38,6 @@ class VGNeRF(nn.Module):
         self.colors = nn.Parameter(pts_cloud.colors)
         self.alphas = nn.Parameter(pts_cloud.alphas)
         
-        # Volume index mapping
-        x, y, z = torch.meshgrid(
-            torch.arange(pts_cloud.shape[0], device='cuda'),
-            torch.arange(pts_cloud.shape[1], device='cuda'),
-            torch.arange(pts_cloud.shape[2], device='cuda'),
-            indexing='ij'
-        )
-        self.volume_indices = torch.stack([x, y, z], dim=-1)
-        
 
     def forward(self, W: torch.Tensor) -> torch.Tensor:
         # Rasterize the point cloud into a 2D image
