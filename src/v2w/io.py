@@ -5,7 +5,6 @@ import yaml
 import numpy as np
 import pandas as pd
 from typing import List, Tuple
-from v2w.config.loader import load_cam_config
 from v2w.utils.misc import is_path_exists
 
 
@@ -74,7 +73,7 @@ def load_intrinsic_mat() -> torch.Tensor:
     :return: Description
     :rtype: Tensor
     """
-    from v2w.config.loader import load_config
+    from v2w.config.loader import load_cam_config
     
     
     # Read cam config file
@@ -92,13 +91,11 @@ def load_intrinsic_mat() -> torch.Tensor:
     c_x = int(width_px / 2)
     c_y = int(height_px / 2)
     
-    K = torch.Tensor([
-        [f_x, 0, c_x],
-        [0, f_y, c_y],
-        [0, 0, 1]
-        ])
-    
-    return K
+    return torch.Tensor(
+        [[f_x, 0, c_x],
+         [0, f_y, c_y],
+         [0, 0, 1]]
+        )
     
 
 def load_yaml(path: str | Path) -> dict:
