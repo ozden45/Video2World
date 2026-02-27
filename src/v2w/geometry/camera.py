@@ -6,9 +6,9 @@ Camera geometry and projection utilities
 
 
 import torch
-from typing import Tuple
-from dataclasses import dataclass, classmethod
-from v2w.config.loader import load_cam_config
+import pandas as pd
+from typing import Tuple, Iterable, Optional
+from dataclasses import classmethod
 from v2w.config.types import CamConfig
 
 
@@ -38,6 +38,38 @@ class Camera:
              [0, 0, 1]]
             )
 
+    def extrinsics_stream(path: str, dataset: Optional[str | None] = None) -> Iterable[Tuple[torch.Tensor, np.ndarray]]:
+        """
+        Load extrinsic camera parameters from specified dataset.
+        Args:
+            path (str): Path for extrinsic camera parameters.
+            dataset (Optional[str | None]):
+        Returns:
+
+        """
+        
+        if not is_path_exists(path):
+            raise FileNotFoundError(f"The path '{path}' is not found.")
+
+    # Load the CSV file into a DataFrame
+    df = pd.read_csv(path)
+    
+    # Extract the sequence and extrinsic columns as a list
+    sequences = df["#timestamp [ns]"].tolist()
+    translation = df[[
+        ' p_RS_R_x [m]', 
+        ' p_RS_R_y [m]', 
+        ' p_RS_R_z [m]']].to_numpy().tolist()
+    rotation = df[[
+        ' q_RS_w []', 
+        ' q_RS_x []', 
+        ' q_RS_y []', 
+        ' q_RS_z []']].to_numpy().tolist()
+    
+    return sequences, translation, rotation
+        
+        
+        
 
     @classmethod
     def extrinsic_to_view(cls, R: torch.Tensor) -> Tuple[float, float]:

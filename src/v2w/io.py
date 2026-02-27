@@ -29,7 +29,7 @@ def load_frame_as_numpy(path: str | Path) -> np.ndarray:
     return frame
 
 
-def load_frame_csv(path: str | Path) -> Tuple[List[str], List[str]]:
+def load_tum_vi_frame_csv(path: str | Path) -> Tuple[List[str], List[str]]:
     # Check if the file exists
     if not is_path_exists(path):
         raise FileNotFoundError(f"The path '{path}' is not found.")
@@ -44,7 +44,7 @@ def load_frame_csv(path: str | Path) -> Tuple[List[str], List[str]]:
     return sequences, files
 
 
-def load_extrinsics_csv(path: str | Path) -> Tuple[List[List[float]], List[List[float]], List[List[float]]]:
+def load_tum_vi_extrinsics_csv(path: str | Path) -> Tuple[List[List[float]], List[List[float]], List[List[float]]]:
     if not is_path_exists(path):
         raise FileNotFoundError(f"The path '{path}' is not found.")
 

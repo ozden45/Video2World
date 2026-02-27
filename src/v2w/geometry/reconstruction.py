@@ -10,7 +10,6 @@ import numpy as np
 from pathlib import Path
 from typing import Optional, Iterable, Tuple
 from v2w.geometry.points import SFMPoints, CamPoints, RayPoints, ImagePoints, SFMPointCloud
-from v2w.io import load_intrinsic_mat
 from v2w.utils.misc import is_path_exists
 
 

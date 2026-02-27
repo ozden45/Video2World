@@ -7,7 +7,7 @@ Dataset split management for Video2World.
 from pathlib import Path
 import numpy as np
 import torch
-from v2w.io import load_frame_as_tensor, load_frame_csv, load_extrinsics_csv
+from v2w.io import load_frame_as_tensor, load_tum_vi_frame_csv, load_tum_vi_extrinsics_csv
 from v2w.utils.misc import is_path_exists
 from v2w.utils.math import quat_to_rot_mat
 
@@ -43,11 +43,11 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
     frame_csv = Path(cam1_dir) / "data.csv"
     
     # Load sequences and frame names from the CSV file
-    seqs, frame_names = load_frame_csv(frame_csv)
+    frame_seqs, frame_names = load_tum_vi_frame_csv(frame_csv)
 
     # Load extrinsics from the mocap CSV file    
     ext_csv = Path(mocap0_dir) / "data.csv"
-    _, translation, rotation_q = load_extrinsics_csv(ext_csv)
+    ext_seqs, translation, rotation_q = load_tum_vi_extrinsics_csv(ext_csv)
     
     # Get split indices based on the provided ratios
     N = len(frame_names)
