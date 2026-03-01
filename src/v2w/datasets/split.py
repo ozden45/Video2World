@@ -20,6 +20,30 @@ def _save_sample_tum_vi(path: str, sequence: str, frame: torch.Tensor, extrinsic
         extrinsics=extrinsics.numpy()
     )
 
+def _reduce_timestamps(ts: np.ndarray) -> np.ndarray:
+    for i in range(len(ts)):
+        ts[i] = ts[i] / 1e12
+        
+    return ts
+
+def _match_timestamps(ts1: np.ndarray, ts2: np.ndarray) -> np.ndarray:
+    pass
+
+def _nearest_match(t1, t2):
+    t1 = np.asarray(t1)
+    t2 = np.asarray(t2)
+
+    indices = np.searchsorted(t2, t1)
+
+    indices = np.clip(indices, 1, len(t2) - 1)
+
+    left = t2[indices - 1]
+    right = t2[indices]
+
+    indices -= (t1 - left < right - t1)
+
+    return indices
+
 
 def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
     """

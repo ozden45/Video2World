@@ -21,11 +21,11 @@ class Camera:
         self.intrinsics = self._set_intrinsics()
         
     def _set_intrinsics(self) -> torch.Tensor:
-        f_mm = cfg.camera.intrinsic.f_mm
-        sensor_width_mm = cfg.camera.intrinsic.sensor_width_mm
-        sensor_height_mm = cfg.camera.intrinsic.sensor_height_mm
-        width_px = cfg.camera.intrinsic.width_px
-        height_px = cfg.camera.intrinsic.height_px
+        f_mm = self.config.camera.intrinsic.f_mm
+        sensor_width_mm = self.config.camera.intrinsic.sensor_width_mm
+        sensor_height_mm = self.config.camera.intrinsic.sensor_height_mm
+        width_px = self.config.camera.intrinsic.width_px
+        height_px = self.config.camera.intrinsic.height_px
 
         f_x = int((f_mm * width_px) / sensor_width_mm)
         f_y = int((f_mm * height_px) / sensor_height_mm)
