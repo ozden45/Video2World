@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from v2w.io import load_frame_as_tensor, load_tum_vi_frame_csv, load_tum_vi_extrinsics_csv
 from v2w.utils.misc import is_path_exists
-from v2w.utils.math import quat_to_rot_mat
+from v2w.utils.math import quat_to_rot
 
 
 def _save_sample_tum_vi(path: str, sequence: str, frame: torch.Tensor, extrinsics: torch.Tensor):
@@ -95,7 +95,7 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
             
         for seq, frame_name, tr, rot_q in split_iter:
             # Convert quaternion to rotation matrix
-            rot = quat_to_rot_mat(rot_q)
+            rot = quat_to_rot(rot_q)
                         
             # Combine translation and rotation into extrinsics
             rot_tensor = torch.tensor(rot)

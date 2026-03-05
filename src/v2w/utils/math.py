@@ -2,7 +2,7 @@ import torch
 from typing import Tuple
 
 
-def quat_to_rot_mat(q: torch.Tensor | Tuple) -> torch.Tensor:
+def quat_to_rot(q: torch.Tensor | Tuple) -> torch.Tensor:
     """
         Converts a quaternion to a rotation matrix.
     Args:
