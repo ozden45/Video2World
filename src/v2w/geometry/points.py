@@ -66,10 +66,10 @@ class Point:
 
 @dataclass
 class Points:
-    coords: torch.Tensor = field(default_factory=lambda: torch.empty((0, 3)))
-    covariances: torch.Tensor = field(default_factory=lambda: torch.empty((0, 3, 3)))
-    colors: torch.Tensor = field(default_factory=lambda: torch.empty((0, 3)))
-    alphas: torch.Tensor = field(default_factory=lambda: torch.empty((0)))
+    coords: torch.Tensor
+    covariances: torch.Tensor
+    colors: torch.Tensor
+    alphas: torch.Tensor
 
     device: InitVar[torch.device | str | None] = None
     dtype: InitVar[torch.dtype | str | None] = None
@@ -86,10 +86,10 @@ class Points:
         else:
             dtype = torch.as_tensor(1, dtype=dtype).dtype
             
-        self.coords = self.coords.to(dtype=dtype, device=device)
-        self.covariances = self.covariances.to(dtype=dtype, device=device)
-        self.colors = self.colors.to(dtype=torch.uint8, device=device)
-        self.alphas = self.alphas.to(dtype=torch.float32, device=device)
+        self.coords = torch.empty((0, 3), dtype=dtype, device=device)
+        self.covariances = torch.empty((0, 3, 3), dtype=dtype, device=device)
+        self.colors = torch.empty((0, 3), dtype=dtype, device=device)
+        self.alphas = torch.empty((0), dtype=dtype, device=device)
 
     def __eq__(self, other: Points):
         return (
@@ -305,18 +305,24 @@ class ImagePoints(Points):
     
     
     @classmethod
-    def load_from_frame(cls, frame: torch.Tensor, depth: torch.Tensor) -> ImagePoints:
-        x = torch.arange(frame.shape[0])
-        y = torch.arange(frame.shape[1])
+    def load_from_frame(cls, frames: torch.Tensor, depth: torch.Tensor) -> ImagePoints:
+        print(batch["images"].shape)   # (B, 3, H, W)
+        print(batch["T_w_c0"].shape)   # (B, 4, 4)
+        
+        B, H, W = frames[0], frames[2], frames[3]
+        
+        
+        x = torch.arange(H)
+        y = torch.arange(W)
         xy = torch.cartesian_prod(x, y)
         z = depth.flatten().unsqueeze(-1)
         
-        N = frame.shape[0]*frame.shape[1]
+        N = frames.shape[0] * frames.shape[1]
         
         return ImagePoints(
-            coords = torch.cat([xy, z], dim=1).unsqueeze(-1),
+            coords = torch.cat([xy, z], dim=1).repeat(B, 1),
             covariances = torch.rand(N, 2, 2),
-            colors = frame.reshape(-1, 3),
+            colors = frames.reshape(-1, 3),
             alphas = torch.rand(N)
         )
             

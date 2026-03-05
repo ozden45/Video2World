@@ -189,10 +189,12 @@ class VolumeReconstructor:
         
         # Iterate over frames
         for batch in loader:
-            frames = batch['images']
+            images = batch['images']
             T_w_c0 = batch['T_w_c0']
             
-            img_pts = ImagePoints.load_from_frame()
+            img_pts = ImagePoints.load_from_frame(
+                frame=images[0].squeeze(1)
+            )
             
             
     
