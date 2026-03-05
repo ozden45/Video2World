@@ -106,10 +106,14 @@ def load_yaml(path: str | Path) -> dict:
         return yaml.safe_load(f)
 
 
-def load_npy(path: str | Path) -> torch.Tensor:
+def load_npy(path: str | Path):
     if not is_path_exists(path):
         raise FileNotFoundError(f"The path {path} is not found")
     
-    depth = np.load(path)
-    depth = torch.Tensor(depth)
+    return np.load(path) 
 
+
+def read_csv(filepath):
+    with open(filepath, "r") as f:
+        reader = csv.reader(f)
+        return [row for row in reader if row]

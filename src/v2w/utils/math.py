@@ -22,7 +22,7 @@ def quat_to_rot(q: torch.Tensor | Tuple) -> torch.Tensor:
     return R
 
 
-def rot_mat_to_quat(R: torch.Tensor) -> torch.Tensor:
+def rot_to_quat(R: torch.Tensor) -> torch.Tensor:
     """
         Converts a rotation matrixx to a quaternion.
     Args:
