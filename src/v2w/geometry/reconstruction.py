@@ -172,8 +172,15 @@ class VolumeReconstructor:
         return sfm_pcd
 
 
-    def reconstruct_from_dataset(self):
-        raise NotImplementedError
+    def reconstruct_from_dataset(self, loader: DataLoader):
+        # Initialize a point cloud
+        sfm_pcd = SFMPointCloud()
+        
+        # Iterate over frames
+        for batch in loader:
+            images = batch['images']
+            T_w_c0 = batch['T_w_c0']
+            
     
     def reconstruct_from_stream(self):
         raise NotImplementedError
