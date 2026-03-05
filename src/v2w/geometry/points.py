@@ -304,18 +304,22 @@ class ImagePoints(Points):
         self.alphas = torch.empty((0), dtype=dtype, device=device)
     
     
-    def load_from_frame(self, frame: torch.Tensor, depth: torch.Tensor):
+    @classmethod
+    def load_from_frame(cls, frame: torch.Tensor, depth: torch.Tensor) -> ImagePoints:
         x = torch.arange(frame.shape[0])
         y = torch.arange(frame.shape[1])
         xy = torch.cartesian_prod(x, y)
         z = depth.flatten().unsqueeze(-1)
         
         N = frame.shape[0]*frame.shape[1]
-        self.coords = torch.cat([xy, z], dim=1).unsqueeze(-1)
-        self.covariances = torch.rand(N, 2, 2)
-        self.colors = frame.reshape(-1, 3)
-        self.alphas = torch.rand(N)
-                
+        
+        return ImagePoints(
+            coords = torch.cat([xy, z], dim=1).unsqueeze(-1),
+            covariances = torch.rand(N, 2, 2),
+            colors = frame.reshape(-1, 3),
+            alphas = torch.rand(N)
+        )
+            
                 
     def scatter(self, step):
         fig = plt.figure()

@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Optional, Iterable, Tuple
 from v2w.geometry.points import SFMPoints, CamPoints, RayPoints, ImagePoints, SFMPointCloud
 from v2w.utils.misc import is_path_exists
+from v2w.models.mono_depth_midas import MonocularDepthModel
+
 
 
 def reconstruct_img_to_ray(img_pts: ImagePoints, K: torch.Tensor) -> RayPoints:
@@ -172,14 +174,26 @@ class VolumeReconstructor:
         return sfm_pcd
 
 
-    def reconstruct_from_dataset(self, loader: DataLoader):
+    def reconstruct_from_dataset(self, loader: DataLoader) -> SFMPointCloud:
+        """
+        Reconstruct volume from a dataset
+        
+        Args:
+            loader: Dataloader containing frames and extrinsics
+            
+        Returns:
+            SFMPointCloud
+        """
         # Initialize a point cloud
         sfm_pcd = SFMPointCloud()
         
         # Iterate over frames
         for batch in loader:
-            images = batch['images']
+            frames = batch['images']
             T_w_c0 = batch['T_w_c0']
+            
+            img_pts = ImagePoints.load_from_frame()
+            
             
     
     def reconstruct_from_stream(self):
