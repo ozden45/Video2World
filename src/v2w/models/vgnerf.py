@@ -28,15 +28,15 @@ class VGNeRFConfig:
 
 
 class VGNeRF(nn.Module):
-    def __init__(self, pts_cloud: SFMPointCloud, config: VGNeRFConfig):
+    def __init__(self, pcd: SFMPointCloud, config: VGNeRFConfig):
         super().__init__()
         self.config = config
         
         # Learnable parameters for each point
-        self.coords = nn.Parameter(pts_cloud.coords)
-        self.covariances = nn.Parameter(pts_cloud.covariances)
-        self.colors = nn.Parameter(pts_cloud.colors)
-        self.alphas = nn.Parameter(pts_cloud.alphas)
+        self.coords = nn.Parameter(pcd.coords)
+        self.covariances = nn.Parameter(pcd.covariances)
+        self.colors = nn.Parameter(pcd.colors)
+        self.alphas = nn.Parameter(pcd.alphas)
         
 
     def forward(self, W: torch.Tensor) -> torch.Tensor:

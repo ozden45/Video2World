@@ -8,7 +8,7 @@ from v2w.utils.math import pose_to_matrix
 from v2w.io import read_csv
 
 
-class TUMVIBatchedDataset(BaseDataset):
+class TUMVIDataset(BaseDataset):
     """
     Returns:
         {

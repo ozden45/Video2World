@@ -51,22 +51,22 @@ class Camera:
         if not is_path_exists(path):
             raise FileNotFoundError(f"The path '{path}' is not found.")
 
-    # Load the CSV file into a DataFrame
-    df = pd.read_csv(path)
+        # Load the CSV file into a DataFrame
+        df = pd.read_csv(path)
     
-    # Extract the sequence and extrinsic columns as a list
-    sequences = df["#timestamp [ns]"].tolist()
-    translation = df[[
-        ' p_RS_R_x [m]', 
-        ' p_RS_R_y [m]', 
-        ' p_RS_R_z [m]']].to_numpy().tolist()
-    rotation = df[[
-        ' q_RS_w []', 
-        ' q_RS_x []', 
-        ' q_RS_y []', 
-        ' q_RS_z []']].to_numpy().tolist()
-    
-    return sequences, translation, rotation
+        # Extract the sequence and extrinsic columns as a list
+        sequences = df["#timestamp [ns]"].tolist()
+        translation = df[[
+            ' p_RS_R_x [m]', 
+            ' p_RS_R_y [m]', 
+            ' p_RS_R_z [m]']].to_numpy().tolist()
+        rotation = df[[
+            ' q_RS_w []', 
+            ' q_RS_x []', 
+            ' q_RS_y []', 
+            ' q_RS_z []']].to_numpy().tolist()
+        
+        return sequences, translation, rotation
         
         
         

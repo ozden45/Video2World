@@ -40,7 +40,7 @@ def __getattr__(name):
         return Video2World
 
     if name == "GaussianSplatting":
-        from .models.gaussian_splatting import GaussianSplatting
+        from .models.vgnerf import GaussianSplatting
         return GaussianSplatting
 
     if name == "MiDaSDepth":

@@ -1,12 +1,6 @@
-# --------------------------------------------------------------
-#   config_classes.py
-#
-#   Description:
-#
-#   Author: Özden Özel
-#   Created: 2026-02-08
-#
-# --------------------------------------------------------------
+"""
+types.py
+"""
 
 from dataclasses import dataclass
 from v2w.config.base import BaseConfig
