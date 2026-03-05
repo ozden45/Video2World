@@ -2,22 +2,17 @@ import torch
 from typing import Tuple
 
 
-def quat_to_rot(q: torch.Tensor | Tuple) -> torch.Tensor:
+def quat_to_rot(qx, qy, qz, qw):
     """
-        Converts a quaternion to a rotation matrix.
-    Args:
-        q (torch.Tensor): A tensor of shape (4,) representing the quaternion [q0, q1, q2, q3].
-    Returns:
-        torch.Tensor: A tensor of shape (3, 3) representing the rotation matrix.
+    Convert quaternion (x,y,z,w) to 3x3 rotation matrix.
     """
-    
-    q0, q1, q2, q3 = q
+    qx, qy, qz, qw = float(qx), float(qy), float(qz), float(qw)
 
-    R = torch.Tensor([
-        [q0**2 + q1**2 - q2**2 - q3**2, 2*q1*q2 - 2*q0*q3, 2*q1*q3 + 2*q0*q2],
-        [2*q1*q2 + 2*q0*q3, q0**2 - q1**2 + q2**2 - q3**2, 2*q2*q3 - 2*q0*q1],
-        [2*q1*q3 - 2*q0*q2, 2*q2*q3 + 2*q0*q1, q0**2 - q1**2 - q2**2 + q3**2]
-        ])
+    R = torch.tensor([
+        [1 - 2*(qy*qy + qz*qz),     2*(qx*qy - qz*qw),     2*(qx*qz + qy*qw)],
+        [2*(qx*qy + qz*qw),     1 - 2*(qx*qx + qz*qz),     2*(qy*qz - qx*qw)],
+        [2*(qx*qz - qy*qw),         2*(qy*qz + qx*qw), 1 - 2*(qx*qx + qy*qy)]
+    ], dtype=torch.float32)
 
     return R
 
@@ -59,3 +54,17 @@ def rot_to_quat(R: torch.Tensor) -> torch.Tensor:
 
     q = torch.Tensor([q0, q1, q2, q3])
     return q
+
+
+def pose_to_matrix(px, py, pz, qx, qy, qz, qw):
+    """
+    Convert position + quaternion into 4x4 homogeneous transform.
+    """
+    R = quat_to_rot(qx, qy, qz, qw)
+
+    T_w_c = torch.eye(4, dtype=torch.float32)
+    T_w_c[:3, :3] = R
+    T_w_c[:3, 3] = torch.tensor([float(px), float(py), float(pz)])
+
+    return T_w_c
+
