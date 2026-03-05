@@ -141,7 +141,7 @@ class Points:
 class PointCloud:
     bounds: torch.Tensor
     res: torch.Tensor
-    downsampling_digit: int
+    n_downsampling: int
     device: torch.device
     
     def __post_init__(self):
@@ -180,7 +180,7 @@ class PointCloud:
         alphas = points.alphas.to(self.device)
         
         # Downsample points based on coordinates
-        factor = 10 ** self.downsampling_digit
+        factor = 10 ** self.n_downsampling
         coords = torch.floor(coords * factor) / factor
         unique_coords, inverse = torch.unique(coords, dim=0, return_inverse=True)
         
