@@ -70,6 +70,7 @@ class Points:
     covariances: torch.Tensor
     colors: torch.Tensor
     alphas: torch.Tensor
+    num_batch: int
 
     device: InitVar[torch.device | str | None] = None
     dtype: InitVar[torch.dtype | str | None] = None
@@ -85,11 +86,10 @@ class Points:
             dtype = torch.float32
         else:
             dtype = torch.as_tensor(1, dtype=dtype).dtype
-            
-        self.coords = torch.empty((0, 3), dtype=dtype, device=device)
-        self.covariances = torch.empty((0, 3, 3), dtype=dtype, device=device)
-        self.colors = torch.empty((0, 3), dtype=dtype, device=device)
-        self.alphas = torch.empty((0), dtype=dtype, device=device)
+        
+        # Check points' shape    
+        self._check_shape()
+        
 
     def __eq__(self, other: Points):
         return (
@@ -103,21 +103,16 @@ class Points:
         return self.coords.shape[0]
 
     def __repr__(self):
-        return f"Points(coords={self.coords}, covariances={self.covariances}, colors={self.colors}, alphas={self.alphas})"
+        return f"Points(coords: {self.coords.shape}, covariances: {self.covariances.shape}, colors: {self.colors.shape}, alphas: {self.alphas.shape})"
 
-    def __iadd__(self, other):
-        if isinstance(other, Point):
-            self.coords = torch.cat([self.coords, other.coords.unsqueeze(0)], dim=0)
-            self.covariances = torch.cat([self.covariances, other.covariance.unsqueeze(0)], dim=0)
-            self.colors = torch.cat([self.colors, other.color.unsqueeze(0)], dim=0)
-            self.alphas = torch.cat([self.alphas, other.alpha], dim=0)
-        elif isinstance(other, Points):
-            self.coords = torch.cat([self.coords, other.coords], dim=0)
-            self.covariances = torch.cat([self.covariances, other.covariances], dim=0)
-            self.colors = torch.cat([self.colors, other.colors], dim=0)
-            self.alphas = torch.cat([self.alphas, other.alphas], dim=0)
-        else:
-            raise TypeError(...)
+    def __iadd__(self, other: Points):
+        if self.num_batch != other.num_batch:
+            raise ValueError(f"The number of batches for two point clusters does not match, ({self.num_batch} != {other.num_batch})")
+        
+        self.coords = torch.cat([self.coords, other.coords], dim=0)
+        self.covariances = torch.cat([self.covariances, other.covariances], dim=0)
+        self.colors = torch.cat([self.colors, other.colors], dim=0)
+        self.alphas = torch.cat([self.alphas, other.alphas], dim=0)
             
         # TODO: Solve point duplications
         
@@ -127,6 +122,30 @@ class Points:
         #self.alphas = torch.unique(self.alphas, dim=0, sorted=True)
         
         return self
+
+    def _check_shape(self):
+        return (
+            len({self.coords.shape[0], 
+                 self.covariances.shape[0], 
+                 self.colors.shape[0], 
+                 self.alphas.shape[0]}) == 1 and
+            
+            len({self.coords.shape[1], 
+                 self.covariances.shape[1], 
+                 self.colors.shape[1], 
+                 self.alphas.shape[1]}) == 1 and
+            
+            self.coords.ndim == 3 and
+            self.coords.shape[-1] == 3 and
+
+            self.covariances.ndim == 4 and
+            self.covariances.shape[-2:] == (3,3) and
+            
+            self.colors.ndim == 3 and
+            self.colors.shape[-1] == 3 and
+
+            self.alphas.ndim == 2
+        )
     
     @property
     def bounds(self):
@@ -152,9 +171,6 @@ class PointCloud:
 
         self.shape = self._compute_shape()
         self._allocate_storage()
-
-        # Occupied voxel indices
-        self.indices = torch.empty((0, 3), dtype=torch.long, device=self.device)
 
     def _validate_inputs(self, bounds: torch.Tensor, res: torch.Tensor) -> None:
         if bounds.shape != (3, 2):
@@ -293,24 +309,44 @@ class ImagePoints(Points):
             device = torch.device(device)
             
         # Resolve dtype
-        if dtype is None:
-            dtype = torch.float32
-        else:
-            dtype = torch.as_tensor(1, dtype=dtype).dtype
+        dtype = torch.float32 if dtype is None else dtype
+        
+        if self.coords.shape[1] == 0:
             
-        self.coords = torch.empty((0, 2), dtype=dtype, device=device)
-        self.covariances = torch.empty((0, 2, 2), dtype=dtype, device=device)
-        self.colors = torch.empty((0, 3), dtype=dtype, device=device)
-        self.alphas = torch.empty((0), dtype=dtype, device=device)
+        # Check points' shape    
+        self._check_shape()
     
+    def _check_shape(self):
+        return (
+            len({self.coords.shape[0], 
+                 self.covariances.shape[0], 
+                 self.colors.shape[0], 
+                 self.alphas.shape[0]}) == 1 and
+            
+            len({self.coords.shape[1], 
+                 self.covariances.shape[1], 
+                 self.colors.shape[1], 
+                 self.alphas.shape[1]}) == 1 and
+            
+            self.coords.ndim == 3 and
+            self.coords.shape[-1] == 2 and
+
+            self.covariances.ndim == 4 and
+            self.covariances.shape[-2:] == (2,2) and
+            
+            self.colors.ndim == 3 and
+            self.colors.shape[-1] == 3 and
+
+            self.alphas.ndim == 2
+        )
+        
+    @classmethod
+    def _is_empty(tensor: torch.Tensor):
+        return tensor.shape[1] == 0
     
     @classmethod
     def load_from_frame(cls, frames: torch.Tensor, depth: torch.Tensor) -> ImagePoints:
-        print(batch["images"].shape)   # (B, 3, H, W)
-        print(batch["T_w_c0"].shape)   # (B, 4, 4)
-        
         B, H, W = frames[0], frames[2], frames[3]
-        
         
         x = torch.arange(H)
         y = torch.arange(W)
