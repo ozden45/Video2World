@@ -67,11 +67,11 @@ class GaussianSplattingModel:
         cy = cam_params['cy']
 
         # Camera's intrinsic matrix
-        self.K = torch.Tensor([
-            [fx, 0, cx], 
-            [0, fy, cy], 
-            [0, 0, 1]
-            ])
+        self.K = torch.Tensor(
+            [[fx, 0, cx], 
+             [0, fy, cy], 
+             [0, 0, 1]]
+            )
 
 
         # -------- parameters --------
