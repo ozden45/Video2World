@@ -74,9 +74,6 @@ class TUMVIDataset(Dataset):
             f for f in all_cam1 if f.stem in allowed_timestamps
         ]
 
-        assert len(self.cam0_files) == len(self.cam1_files), \
-            "cam0 and cam1 frame count mismatch after split"
-
         if len(self.cam0_files) != len(self.cam1_files):
             raise RuntimeError(
                 "cam0 and cam1 frame count mismatch after split"
@@ -171,7 +168,7 @@ class TUMVIDataset(Dataset):
         images = torch.stack([img0, img1], dim=0)
 
         T_w_c0 = self.get_pose_nearest(timestamp)
-
+        
         return {
             "images": images,
             "T_w_c0": T_w_c0

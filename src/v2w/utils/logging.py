@@ -23,6 +23,10 @@ def setup_logging(log_file=None):
 
     # optional file logging
     if log_file:
-        file_handler = logging.FileHandler(log_file)
+        file_handler = logging.FileHandler(log_file, mode="w")
         file_handler.setFormatter(formatter)
         root.addHandler(file_handler)
+        
+    # silence noisy libraries
+    logging.getLogger("PIL").setLevel(logging.WARNING)
+    
