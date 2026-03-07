@@ -8,6 +8,7 @@ from ..points import Point, Points
 from ...exception import ShapeError
 
 
+
 @dataclass
 class PointCloud:
     bounds: torch.Tensor

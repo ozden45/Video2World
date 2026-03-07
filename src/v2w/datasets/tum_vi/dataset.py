@@ -113,7 +113,7 @@ class TUMVIDataset(BaseDataset):
 # Dataloader factory
 def create_dataloader(root, sequence, batch_size=4, num_workers=4):
 
-    dataset = TUMVIBatchedDataset(root, sequence)
+    dataset = TUMVIDataset(root, sequence)
 
     loader = DataLoader(
         dataset,

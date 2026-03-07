@@ -4,19 +4,25 @@ split.py
 Dataset split management for Video2World.
 """
 
+import torch
 from pathlib import Path
 import numpy as np
-import torch
-from v2w.io import load_frame_as_tensor, load_tum_vi_frame_csv, load_tum_vi_extrinsics_csv
-from v2w.utils.misc import is_path_exists
-from v2w.utils.math import quat_to_rot
+from ...io import load_frame_as_tensor, load_tum_vi_frame_csv, load_tum_vi_extrinsics_csv
+from ...utils import is_path_exists, quat_to_rot
 
 
-def _save_sample_tum_vi(path: str, sequence: str, frame: torch.Tensor, extrinsics: torch.Tensor):
+def _save_sample_tum_vi(
+    path: str, 
+    sequence: str, 
+    frame: torch.Tensor, 
+    depth: torch.Tensor,
+    extrinsics: torch.Tensor
+):
     np.savez(
         path,
         sequence=sequence,
         frame=frame.numpy(),
+        depth=depth.numpy(),
         extrinsics=extrinsics.numpy()
     )
 
@@ -45,7 +51,11 @@ def _nearest_match(t1, t2):
     return indices
 
 
-def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
+def split_tum_vi_dataset(
+    root: str, 
+    split_dir: str, 
+    split_ratios: dict
+):
     """
     Splits the raw TUM VI dataset into train/val/test sets based on predefined splits.
     
@@ -110,3 +120,73 @@ def split_tum_vi_dataset(root: str, split_dir: str, split_ratios: dict):
             dest_path = Path(split_dir) / split / f"{frame_name}.npz" 
             _save_sample_tum_vi(dest_path, seq, frame, extrinsics)    
         
+
+
+
+
+import json
+import random
+from pathlib import Path
+
+
+def create_split(
+    root,
+    sequence,
+    train_ratio=0.8,
+    val_ratio=0.1,
+    seed=42,
+    save_file=True
+):
+    """
+    Creates train/val/test splits for a TUMVI sequence.
+
+    Returns dict:
+    {
+        "train": [...indices...],
+        "val": [...indices...],
+        "test": [...indices...]
+    }
+    """
+
+    base = Path(root) / sequence / "mav0"
+    cam0_dir = base / "cam0" / "data"
+
+    files = sorted(cam0_dir.glob("*.png"))
+    n = len(files)
+
+    indices = list(range(n))
+
+    random.seed(seed)
+    random.shuffle(indices)
+
+    train_end = int(train_ratio * n)
+    val_end = int((train_ratio + val_ratio) * n)
+
+    splits = {
+        "train": indices[:train_end],
+        "val": indices[train_end:val_end],
+        "test": indices[val_end:]
+    }
+
+    if save_file:
+        out_path = Path(root) / sequence / "split.json"
+        with open(out_path, "w") as f:
+            json.dump(splits, f, indent=2)
+
+        print(f"Split file saved to: {out_path}")
+
+    return splits
+
+
+if __name__ == "__main__":
+
+    root = "/path/to/TUMVI"
+    sequence = "room1"
+
+    splits = create_split(root, sequence)
+
+    print("Train:", len(splits["train"]))
+    print("Val:", len(splits["val"]))
+    print("Test:", len(splits["test"]))
+
+

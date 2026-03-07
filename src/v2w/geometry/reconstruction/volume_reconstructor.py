@@ -1,13 +1,17 @@
 import torch
+from torch.utils.data import DataLoader
 from pathlib import Path
 from typing import Tuple
 import numpy as np
+from dataclasses import dataclass, InitVar
 from ..points.sfm import SFMPoints, SFMPointCloud
 from ..points.image import ImagePoints
 from .img_to_sfm import reconstruct_img_to_sfm, reconstruct_img_to_sfm_tensor
+from ...datasets import TUMVIDataset
 
 
 
+@dataclass
 class VolumeReconstructor:
     """
     High-level orchestration class for reconstructing an SFM volume
@@ -19,11 +23,13 @@ class VolumeReconstructor:
         - Aggregating results into a point cloud
 
     """
+    intrinsics: torch.Tensor
+    
+    device: InitVar[torch.device | str | None] = None
 
-    def __init__(
+    def __post_init__(
         self,
-        intrinsics: torch.Tensor,
-        device: Optional[torch.device] = None,
+        device = None
     ):
         """
         Args:
@@ -37,6 +43,9 @@ class VolumeReconstructor:
     def reconstruct_from_directory(
         self,
         frame_dir: str,
+        bounds: torch.Tensor,
+        res: torch.Tensor,
+        n_downsampling: int,
     ) -> SFMPointCloud:
         """
         Reconstruct volume from a directory of frame files.
@@ -61,8 +70,20 @@ class VolumeReconstructor:
         return sfm_pcd
 
 
-    def reconstruct_from_dataset(self):
-        raise NotImplementedError
+    def reconstruct_from_dataset(
+        self,
+        loader: DataLoader,
+        bounds: torch.Tensor,
+        res: torch.Tensor,
+        n_downsampling: int
+    ) -> SFMPointCloud:
+        """
+        """
+        for batch in loader:
+            images = batch["images"]
+            T_w_c0 = batch["T_w_c0"]
+            
+            
     
     def reconstruct_from_stream(self):
         raise NotImplementedError
@@ -95,7 +116,7 @@ class VolumeReconstructor:
     def _reconstruct_single_frame(
         self,
         frame: torch.Tensor,
-        extrinsics: np.ndarray,
+        extrinsics: torch.Tensor,
     ) -> SFMPoints:
         """
         Perform reconstruction for a single frame.
