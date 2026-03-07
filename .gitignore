@@ -98,3 +98,6 @@ compile_commands.json
 tmp/
 temp/
 *.log
+
+
+notes.txt

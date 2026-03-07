@@ -13,22 +13,12 @@ def create_splits(
     """
 
     root = Path(root)
-
-    cam0_dir = (
-        root
-        / "raw"
-        / sequence
-        / "mav0"
-        / "cam0"
-        / "data"
-    )
-
+    cam0_dir = root / "raw" / sequence / "mav0" / "cam0" / "data"
     files = sorted(cam0_dir.glob("*.png"))
 
     timestamps = [f.stem for f in files]
 
     n = len(timestamps)
-
     train_end = int(n * train_ratio)
     val_end = int(n * (train_ratio + val_ratio))
 
@@ -51,12 +41,4 @@ def create_splits(
     print("Val:", len(splits["val"]))
     print("Test:", len(splits["test"]))
 
-
-if __name__ == "__main__":
-
-    create_splits(
-        root="data/tum_vi",
-        sequence="dataset-corridor4_512_16"
-    )
-    
     
