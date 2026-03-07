@@ -18,16 +18,10 @@ class Point:
     
     def __post_init__(self, device=None, dtype=None):
         # Resolve device
-        if device is None:
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        else:
-            device = torch.device(device)
+        device = self._resolve_device(device)
             
         # Resolve dtype
-        if dtype is None:
-            dtype = torch.float32
-        else:
-            dtype = torch.as_tensor(1, dtype=dtype).dtype
+        dtype = self._resolve_dtype(dtype)
             
         self.coords = self.coords.to(dtype=dtype, device=device)
         self.covariance = self.covariance.to(dtype=dtype, device=device)
@@ -45,6 +39,19 @@ class Point:
     def __repr__(self):
         return f"Point(coords={self.coords}, covariance={self.covariance}, color={self.color}, alpha={self.alpha})"
 
+    def _resolve_device(self, device):
+        if device is None:
+            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            return torch.device(device)
+        
+    def _resolve_dtype(self, dtype):
+        if dtype is None:
+            return torch.float32
+        else:
+            return torch.as_tensor(1, dtype=dtype).dtype
+
+
 
 @dataclass
 class Points:
@@ -58,21 +65,15 @@ class Points:
     dtype: InitVar[torch.dtype | str | None] = None
 
     def __post_init__(self, device=None, dtype=None):
-        if device is None:
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        else:
-            device = torch.device(device)
+        # Resolve device
+        device = self._resolve_device(device)
             
         # Resolve dtype
-        if dtype is None:
-            dtype = torch.float32
-        else:
-            dtype = torch.as_tensor(1, dtype=dtype).dtype
+        dtype = self._resolve_dtype(dtype)
         
         # Check points' shape    
         self._check_shape()
         
-
     def __eq__(self, other: Points):
         return (
             torch.allclose(self.coords, other.coords, atol=1e-2, rtol=1e-2) and
@@ -132,6 +133,18 @@ class Points:
     @classmethod
     def _is_empty(cls, tensor: torch.Tensor):
         return tensor.shape[1] == 0
+        
+    def _resolve_device(self, device):
+        if device is None:
+            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            return torch.device(device)
+        
+    def _resolve_dtype(self, dtype):
+        if dtype is None:
+            return torch.float32
+        else:
+            return torch.as_tensor(1, dtype=dtype).dtype
         
     @property
     def bounds(self):

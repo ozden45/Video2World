@@ -1,11 +1,11 @@
 from __future__ import annotations
 import torch
-from dataclasses import dataclass
+from dataclasses import dataclass, InitVar
 import matplotlib.pyplot as plt
 import logging
 import open3d as o3d
-from v2w.exception import ShapeError
-
+from ..points import Point, Points
+from ...exception import ShapeError
 
 
 @dataclass
@@ -13,32 +13,59 @@ class PointCloud:
     bounds: torch.Tensor
     res: torch.Tensor
     n_downsampling: int
-    device: torch.device
     
-    def __post_init__(self):
-        self._validate_inputs(self.bounds, self.res)
+    device: InitVar[torch.device | str | None] = None
+    dtype: InitVar[torch.dtype | str | None] = None
+    
+    def __post_init__(self, device=None, dtype=None):
+        # Resolve device
+        device = self._resolve_device(device)
+            
+        # Resolve dtype
+        dtype = self._resolve_dtype(dtype)
+        
+        self._validate_inputs(self.bounds, self.res, self.n_downsampling)
 
-        self.bounds = self.bounds.to(self.device, dtype=torch.float32)
-        self.res = self.res.to(self.device, dtype=torch.float32).squeeze()
+        self.bounds = self.bounds.to(device=device, dtype=dtype)
+        self.res = self.res.to(device=device, dtype=dtype).squeeze()
 
         self.shape = self._compute_shape()
         self._allocate_storage()
 
-    def _validate_inputs(self, bounds: torch.Tensor, res: torch.Tensor) -> None:
+    def _validate_inputs(
+        self, 
+        bounds: torch.Tensor, 
+        res: torch.Tensor, 
+        n_downsampling: int
+    ) -> None:
         if bounds.shape != (3, 2):
-            raise ShapeError(f"Invalid bounds shape {bounds.shape}, expected (3, 2)")
+            raise ShapeError(f"Invalid bounds shape {bounds.shape}, expected (3, 2).")
         if res.shape not in [(3,), (3, 1)]:
-            raise ShapeError(f"Invalid resolution shape {res.shape}, expected (3,)")
+            raise ShapeError(f"Invalid resolution shape {res.shape}, expected (3,).")
+        if self.n_downsampling < 0:
+            raise ValueError(f"Invalid downsampling digit {n_downsampling}, expected n_downsampling > 0.")
 
     def _compute_shape(self) -> torch.Tensor:
         dims = ((self.bounds[:, 1] - self.bounds[:, 0]) / self.res).floor()
         return dims.to(torch.long)
 
-    def _allocate_storage(self) -> None:
-        self.coords = torch.empty((0, 3), dtype=torch.float32, device=self.device)
-        self.covariances = torch.empty((0, 3, 3), dtype=torch.float32, device=self.device)
-        self.colors = torch.empty((0, 3, 9), dtype=torch.uint8, device=self.device)
-        self.alphas = torch.empty((0, ), dtype=torch.float32, device=self.device)
+    def _allocate_storage(self, device) -> None:
+        self.coords = torch.empty((0, 3), dtype=torch.float32, device=device)
+        self.covariances = torch.empty((0, 3, 3), dtype=torch.float32, device=device)
+        self.colors = torch.empty((0, 3, 9), dtype=torch.uint8, device=device)
+        self.alphas = torch.empty((0, ), dtype=torch.float32, device=device)
+
+    def _resolve_device(self, device):
+        if device is None:
+            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            return torch.device(device)
+        
+    def _resolve_dtype(self, dtype):
+        if dtype is None:
+            return torch.float32
+        else:
+            return torch.as_tensor(1, dtype=dtype).dtype
 
     def add_pts(self, points: Points) -> None:
         # Set the device same as the point cloud
