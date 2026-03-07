@@ -7,7 +7,6 @@ Dataset split management for Video2World.
 import torch
 from pathlib import Path
 import numpy as np
-from ...io import load_frame_as_tensor, load_tum_vi_frame_csv, load_tum_vi_extrinsics_csv
 from ...utils import is_path_exists, quat_to_rot
 
 
@@ -124,69 +123,67 @@ def split_tum_vi_dataset(
 
 
 
+
+
 import json
-import random
 from pathlib import Path
 
 
-def create_split(
+def create_splits(
     root,
     sequence,
     train_ratio=0.8,
-    val_ratio=0.1,
-    seed=42,
-    save_file=True
+    val_ratio=0.1
 ):
     """
-    Creates train/val/test splits for a TUMVI sequence.
-
-    Returns dict:
-    {
-        "train": [...indices...],
-        "val": [...indices...],
-        "test": [...indices...]
-    }
+    Create temporal splits for a TUM-VI sequence.
     """
 
-    base = Path(root) / sequence / "mav0"
-    cam0_dir = base / "cam0" / "data"
+    root = Path(root)
+
+    cam0_dir = (
+        root
+        / "raw"
+        / sequence
+        / "mav0"
+        / "cam0"
+        / "data"
+    )
 
     files = sorted(cam0_dir.glob("*.png"))
-    n = len(files)
 
-    indices = list(range(n))
+    timestamps = [f.stem for f in files]
 
-    random.seed(seed)
-    random.shuffle(indices)
+    n = len(timestamps)
 
-    train_end = int(train_ratio * n)
-    val_end = int((train_ratio + val_ratio) * n)
+    train_end = int(n * train_ratio)
+    val_end = int(n * (train_ratio + val_ratio))
 
     splits = {
-        "train": indices[:train_end],
-        "val": indices[train_end:val_end],
-        "test": indices[val_end:]
+        "train": timestamps[:train_end],
+        "val": timestamps[train_end:val_end],
+        "test": timestamps[val_end:]
     }
 
-    if save_file:
-        out_path = Path(root) / sequence / "split.json"
-        with open(out_path, "w") as f:
-            json.dump(splits, f, indent=2)
+    out_dir = root / "processed" / sequence / "splits"
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"Split file saved to: {out_path}")
+    out_file = out_dir / "split.json"
 
-    return splits
+    with open(out_file, "w") as f:
+        json.dump(splits, f, indent=2)
 
-
-if __name__ == "__main__":
-
-    root = "/path/to/TUMVI"
-    sequence = "room1"
-
-    splits = create_split(root, sequence)
-
+    print("Split saved to:", out_file)
     print("Train:", len(splits["train"]))
     print("Val:", len(splits["val"]))
     print("Test:", len(splits["test"]))
 
 
+if __name__ == "__main__":
+
+    create_splits(
+        root="data/tum_vi",
+        sequence="dataset-corridor4_512_16"
+    )
+    
+    
