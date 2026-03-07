@@ -34,7 +34,7 @@ def create_tumvi_dataloader(
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=(split == "train"),
+        shuffle=False,
         num_workers=num_workers,
         pin_memory=pin_memory,
     )

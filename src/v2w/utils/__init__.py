@@ -1,4 +1,4 @@
-from .logger import setup_logging
+from .logging import setup_logging
 from .math import quat_to_rot, rot_to_quat
 from .misc import is_path_exists
 

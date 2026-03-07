@@ -1,4 +1,3 @@
-from .base import BaseDataset
-from .tum_vi import TUMVIDataset, split_tum_vi_dataset
+from .tum_vi import TUMVIDataset, create_splits
 
-__all__ = ["BaseDataset", "TUMVIDataset", "split_tum_vi_dataset"]
+__all__ = ["TUMVIDataset", "create_splits"]

@@ -1,5 +1,8 @@
 import json
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def create_splits(
@@ -36,9 +39,12 @@ def create_splits(
     with open(out_file, "w") as f:
         json.dump(splits, f, indent=2)
 
-    print("Split saved to:", out_file)
-    print("Train:", len(splits["train"]))
-    print("Val:", len(splits["val"]))
-    print("Test:", len(splits["test"]))
+    logger.info("Split saved to: %s", out_file)
+    logger.info(
+        "Dataset split sizes | train=%d val=%d test=%d",
+        len(splits["train"]),
+        len(splits["val"]),
+        len(splits["test"])
+    )
 
     

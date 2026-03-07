@@ -1,5 +1,6 @@
 import bisect
 import json
+import logging
 from pathlib import Path
 
 import torch
@@ -9,6 +10,9 @@ import torchvision.transforms as transforms
 
 from v2w.utils.math import pose_to_matrix
 from v2w.io import read_csv
+
+
+logger = logging.getLogger(__name__)
 
 
 class TUMVIDataset(Dataset):
@@ -33,6 +37,12 @@ class TUMVIDataset(Dataset):
         self.sequence = sequence
         self.split = split
 
+        logger.info(
+            "Initializing TUM-VI dataset | sequence=%s split=%s",
+            sequence,
+            split
+        )
+
         # -------- Paths --------
         raw_base = self.root / "raw" / sequence / "mav0"
         processed_base = self.root / "processed" / sequence
@@ -51,6 +61,8 @@ class TUMVIDataset(Dataset):
 
         allowed_timestamps = set(splits[split])
 
+        logger.debug("Allowed timestamps: %d", len(allowed_timestamps))
+
         # -------- Load Images --------
         all_cam0 = sorted(self.cam0_dir.glob("*.png"))
         all_cam1 = sorted(self.cam1_dir.glob("*.png"))
@@ -65,12 +77,29 @@ class TUMVIDataset(Dataset):
         assert len(self.cam0_files) == len(self.cam1_files), \
             "cam0 and cam1 frame count mismatch after split"
 
+        if len(self.cam0_files) != len(self.cam1_files):
+            raise RuntimeError(
+                "cam0 and cam1 frame count mismatch after split"
+                f"(cam0={len(self.cam0_files)}, cam1={len(self.cam1_files)})"
+            )
+
+        logger.info(
+            "Loaded frames | cam0=%d cam1=%d",
+            len(self.cam0_files),
+            len(self.cam1_files)
+        )
+
         # -------- Load Poses --------
         pose_csv_path = raw_base / "mocap0" / "data.csv"
+        
+        logger.debug("Loading poses from %s", pose_csv_path)
+        
         pose_rows = read_csv(pose_csv_path)
 
         self.pose_timestamps = []
         self.pose_dict = {}
+
+        skipped_rows = 0
 
         for row in pose_rows:
             try:
@@ -87,16 +116,24 @@ class TUMVIDataset(Dataset):
                 self.pose_timestamps.append(float(ts))
                 self.pose_dict[float(ts)] = T_w_c
 
-            except:
-                continue
+            except Exception:
+                skipped_rows += 1
 
         self.pose_timestamps.sort()
+
+        logger.info(
+            "Loaded poses | valid=%d skipped=%d",
+            len(self.pose_timestamps),
+            skipped_rows
+        )
 
         # -------- Transform --------
         self.transform = transforms.Compose([
             transforms.Resize(image_size),
             transforms.ToTensor(),
         ])
+        
+        logger.debug("Image transform initialized | size=%s", image_size)
 
     def __len__(self):
         return len(self.cam0_files)
