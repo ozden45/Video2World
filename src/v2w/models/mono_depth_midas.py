@@ -1,4 +1,5 @@
 import torch
+from torchvision import transforms
 import logging
 from typing import Literal
 from dataclasses import dataclass
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MonocularDepthModel:
     model_type: Literal["DPT_Large", "DPT_Hybrid", "MiDaS_small"] = "MiDaS_small"
-    input_dim: torch.Tensor = (512, 512)
+    input_dim: torch.Size = torch.Size({1213, 1546})
     device: torch.device = None
     min_depth: float = 0
     max_depth: float = 1

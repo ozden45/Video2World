@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Tuple
 import numpy as np
 from dataclasses import dataclass
+from .img_to_sfm import reconstruct_img_to_sfm
 from ..points.sfm import SFMPoints, SFMPointCloud
 from ..points.image import ImagePoints
-from .img_to_sfm import reconstruct_img_to_sfm
-
+from ...models import MonocularDepthModel
 
 
 @dataclass
@@ -23,10 +23,21 @@ class VolumeReconstructor:
 
     """
     
-    bounds: torch.Tensor
-    res: torch.Tensor
-    n_downsampling: int
-    intrinsics: torch.Tensor
+    depth_model: MonocularDepthModel = MonocularDepthModel()
+    bounds: torch.Tensor = torch.tensor(
+        [[0, 10],
+         [0, 10],
+         [0, 10]]
+        )
+    res: torch.Tensor = torch.tensor(
+        [0.1, 0.1, 0.1]
+        )
+    n_downsampling: int = 3
+    intrinsics: torch.Tensor = torch.tensor(
+        [[353.,   0., 600.],
+         [  0., 442., 600.],
+         [  0.,   0.,   1.]]
+        )
     
 
     def _resolve_device(self, device):

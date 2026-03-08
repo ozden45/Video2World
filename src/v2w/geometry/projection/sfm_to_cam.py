@@ -1,4 +1,5 @@
 import torch
+from typing import Tuple
 from ..points import SFMPoints, CamPoints
 from ...exception import ShapeError
 

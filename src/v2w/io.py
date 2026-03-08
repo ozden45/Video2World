@@ -2,31 +2,25 @@ import torch
 import yaml
 import numpy as np
 import csv
-from PIL import Image
-from torchvision import transforms
 from pathlib import Path
 from .utils import is_path_exists
+from .config.types import CamConfig
+
 
     
-    
-def load_intrinsic_mat() -> torch.Tensor:
+def load_intrinsic_mat(cfg: CamConfig) -> torch.Tensor:
     """
     Docstring for compute_int_cam_mat
     
     :return: Description
     :rtype: Tensor
     """
-    from v2w.config.loader import load_cam_config
-    
-    # Read cam config file
-    path = Path(__file__).resolve().parents[2] / "configs/cam.yaml"
-    cfg = load_cam_config(path)
 
-    f_mm = cfg.camera.intrinsic.f_mm
-    sensor_width_mm = cfg.camera.intrinsic.sensor_width_mm
-    sensor_height_mm = cfg.camera.intrinsic.sensor_height_mm
-    width_px = cfg.camera.intrinsic.width_px
-    height_px = cfg.camera.intrinsic.height_px
+    f_mm = cfg.intrinsic.f_mm
+    sensor_width_mm = cfg.intrinsic.sensor_width_mm
+    sensor_height_mm = cfg.intrinsic.sensor_height_mm
+    width_px = cfg.intrinsic.width_px
+    height_px = cfg.intrinsic.height_px
     
     f_x = int((f_mm * width_px) / sensor_width_mm)
     f_y = int((f_mm * height_px) / sensor_height_mm)
