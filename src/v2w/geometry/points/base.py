@@ -16,7 +16,7 @@ class Point:
     device: InitVar[torch.device | str | None] = None
     dtype: InitVar[torch.dtype | str | None] = None
     
-    def __post_init__(self, device=None, dtype=None):
+    def __post_init__(self, device = None, dtype = None):
         # Resolve device
         device = self._resolve_device(device)
             

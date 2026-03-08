@@ -1,5 +1,5 @@
 from torch.utils.data import DataLoader
-from v2w.datasets.tum_vi.dataset import TUMVIDataset
+from v2w.datasets.tum_vi import TUMVIDataset
 
 
 def create_tumvi_dataloader(

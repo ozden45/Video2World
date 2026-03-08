@@ -38,20 +38,24 @@ class TUMVIDataset(Dataset):
         self.split = split
 
         logger.info(
-            "Initializing TUM-VI dataset | sequence=%s split=%s",
+            "Initializing TUM-VI dataset | sequence=%s, split=%s",
             sequence,
             split
         )
 
-        # -------- Paths --------
+        # Paths
         raw_base = self.root / "raw" / sequence / "mav0"
         processed_base = self.root / "processed" / sequence
 
         self.cam0_dir = raw_base / "cam0" / "data"
         self.cam1_dir = raw_base / "cam1" / "data"
 
-        # -------- Load Split --------
+        # Load split
         split_file = processed_base / "splits" / "split.json"
+
+        logger.debug("Cam0 directory path: %s", self.cam0_dir)
+        logger.debug("Cam1 directory path: %s", self.cam1_dir)
+        logger.debug("Split file path: %s", split_file)
 
         if not split_file.exists():
             raise FileNotFoundError(f"Split file not found: {split_file}")
@@ -63,7 +67,7 @@ class TUMVIDataset(Dataset):
 
         logger.debug("Allowed timestamps: %d", len(allowed_timestamps))
 
-        # -------- Load Images --------
+        # Load images 
         all_cam0 = sorted(self.cam0_dir.glob("*.png"))
         all_cam1 = sorted(self.cam1_dir.glob("*.png"))
 
@@ -86,24 +90,20 @@ class TUMVIDataset(Dataset):
             len(self.cam1_files)
         )
 
-        # -------- Load Poses --------
+        # Load poses
         pose_csv_path = raw_base / "mocap0" / "data.csv"
+        pose_rows = read_csv(pose_csv_path)
         
         logger.debug("Loading poses from %s", pose_csv_path)
-        
-        pose_rows = read_csv(pose_csv_path)
+        logger.debug("Read %d pose rows", len(pose_rows))
 
         self.pose_timestamps = []
         self.pose_dict = {}
 
-        skipped_rows = 0
 
         for row in pose_rows:
             try:
                 ts = str(int(float(row[0])))
-
-                if ts not in allowed_timestamps:
-                    continue
 
                 px, py, pz = row[1:4]
                 qx, qy, qz, qw = row[4:8]
@@ -112,19 +112,13 @@ class TUMVIDataset(Dataset):
 
                 self.pose_timestamps.append(float(ts))
                 self.pose_dict[float(ts)] = T_w_c
-
+                
             except Exception:
-                skipped_rows += 1
-
+                pass
+        
         self.pose_timestamps.sort()
 
-        logger.info(
-            "Loaded poses | valid=%d skipped=%d",
-            len(self.pose_timestamps),
-            skipped_rows
-        )
-
-        # -------- Transform --------
+        # Transform
         self.transform = transforms.Compose([
             transforms.Resize(image_size),
             transforms.ToTensor(),

@@ -23,29 +23,30 @@ class VolumeReconstructor:
         - Aggregating results into a point cloud
 
     """
+    
+    bounds: torch.Tensor
+    res: torch.Tensor
+    n_downsampling: int
     intrinsics: torch.Tensor
     
-    device: InitVar[torch.device | str | None] = None
 
-    def __post_init__(
-        self,
-        device = None
-    ):
-        """
-        Args:
-            intrinsics: Camera intrinsic matrix.
-            device: Optional torch device for computation.
-        """
-        self.K = intrinsics
-        self.device = device
-
+    def _resolve_device(self, device):
+        if device is None:
+            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            return torch.device(device)
+        
+    def _resolve_dtype(self, dtype):
+        if dtype is None:
+            return torch.float32
+        else:
+            return torch.as_tensor(1, dtype=dtype).dtype
 
     def reconstruct_from_directory(
         self,
         frame_dir: str,
-        bounds: torch.Tensor,
-        res: torch.Tensor,
-        n_downsampling: int,
+        device = None,
+        dtype = None
     ) -> SFMPointCloud:
         """
         Reconstruct volume from a directory of frame files.
@@ -61,7 +62,17 @@ class VolumeReconstructor:
         if not frame_path.exists():
             raise FileNotFoundError(f"Directory not found: {frame_dir}")
 
-        sfm_pcd = SFMPointCloud()
+        # Resolve device and dtype
+        device = self._resolve_device(device)
+        dtype = self._resolve_dtype(dtype)
+
+        sfm_pcd = SFMPointCloud(
+            bounds=self.bounds,
+            res=self.res,
+            n_downsampling=self.n_downsampling,
+            device=device,
+            dtype=dtype
+        )
 
         for frame, extrinsics in self._iter_frames(frame_path):
             points = self._reconstruct_single_frame(frame, extrinsics)
@@ -73,16 +84,36 @@ class VolumeReconstructor:
     def reconstruct_from_dataset(
         self,
         loader: DataLoader,
-        bounds: torch.Tensor,
-        res: torch.Tensor,
-        n_downsampling: int
+        device = None,
+        dtype = None
     ) -> SFMPointCloud:
         """
         """
+        
+        # Resolve device and dtype
+        device = self._resolve_device(device)
+        dtype = self._resolve_dtype(dtype)
+        
+        sfm_pcd = SFMPointCloud(
+            bounds=self.bounds,
+            res=self.res,
+            n_downsampling=self.n_downsampling,
+            device=device,
+            dtype=dtype
+        )
+        
         for batch in loader:
             images = batch["images"]
             T_w_c0 = batch["T_w_c0"]
+         
+            sfm_pts = self._reconstruct_single_frame(
+                frame=images[:, 0, :, :, :],
+                extrinsics=T_w_c0[:, :3, :3]
+            )
             
+            sfm_pcd.add_pts(sfm_pts)
+            
+        return sfm_pcd
             
     
     def reconstruct_from_stream(self):
@@ -125,9 +156,8 @@ class VolumeReconstructor:
         """
         img_pts = ImagePoints.load_from_frame(frame, depth=None)
 
-        # Assumes reconstruct_img_to_sfm is your domain function
         return reconstruct_img_to_sfm(
             img_pts,
             extrinsics,
-            self.K,
+            self.intrinsics,
         )
