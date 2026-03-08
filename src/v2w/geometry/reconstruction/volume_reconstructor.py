@@ -3,11 +3,10 @@ from torch.utils.data import DataLoader
 from pathlib import Path
 from typing import Tuple
 import numpy as np
-from dataclasses import dataclass, InitVar
+from dataclasses import dataclass
 from ..points.sfm import SFMPoints, SFMPointCloud
 from ..points.image import ImagePoints
-from .img_to_sfm import reconstruct_img_to_sfm, reconstruct_img_to_sfm_tensor
-from ...datasets import TUMVIDataset
+from .img_to_sfm import reconstruct_img_to_sfm
 
 
 
@@ -88,18 +87,23 @@ class VolumeReconstructor:
         dtype = None
     ) -> SFMPointCloud:
         """
+        Reconstruct volume from a dataset.
+
+        Args:
+            loader: Dataloader containing a dataset.
+            device: Torch device
+            dtype: Torch dtype
+
+        Returns:
+            SFMPointCloud
         """
-        
-        # Resolve device and dtype
-        device = self._resolve_device(device)
-        dtype = self._resolve_dtype(dtype)
         
         sfm_pcd = SFMPointCloud(
             bounds=self.bounds,
             res=self.res,
             n_downsampling=self.n_downsampling,
-            device=device,
-            dtype=dtype
+            device=self._resolve_device(device),
+            dtype=self._resolve_dtype(dtype)
         )
         
         for batch in loader:
@@ -108,6 +112,7 @@ class VolumeReconstructor:
          
             sfm_pts = self._reconstruct_single_frame(
                 frame=images[:, 0, :, :, :],
+                depth=None,
                 extrinsics=T_w_c0[:, :3, :3]
             )
             
@@ -118,6 +123,24 @@ class VolumeReconstructor:
     
     def reconstruct_from_stream(self):
         raise NotImplementedError
+    
+    
+    def _reconstruct_single_batch(
+        self,
+        frame: torch.Tensor,
+        depth: torch.Tensor,
+        extrinsics: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        """
+        
+        img_pts = ImagePoints.load_from_frame(frame, depth)
+
+        return reconstruct_img_to_sfm(
+            img_pts,
+            extrinsics,
+            self.intrinsics,
+        )
     
     
     def _iter_frames(
@@ -147,14 +170,15 @@ class VolumeReconstructor:
     def _reconstruct_single_frame(
         self,
         frame: torch.Tensor,
-        extrinsics: torch.Tensor,
+        depth: torch.Tensor,
+        extrinsics: torch.Tensor
     ) -> SFMPoints:
         """
         Perform reconstruction for a single frame.
 
         This method isolates frame-level reconstruction logic.
         """
-        img_pts = ImagePoints.load_from_frame(frame, depth=None)
+        img_pts = ImagePoints.load_from_frame(frame, depth)
 
         return reconstruct_img_to_sfm(
             img_pts,
