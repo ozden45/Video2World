@@ -1,13 +1,4 @@
 
-pytest_plugins = [
-    "tests.fixtures.paths",
-    "tests.fixtures.images",
-    "tests.fixtures.tensors",
-    "tests.fixtures.models",
-    "tests.fixtures.datasets",
-    "tests.fixtures.geometry",
-    "tests.fixtures.config",
-]
 
 
 
@@ -23,74 +14,82 @@ from v2w.geometry.points import *
 
 
 
+#====================================================
+# Geometry test fixtures
+#====================================================
 
-
-
-
-
-
-
-
-
-
-# |---> Point cloud test fixtures
 
 @pytest.fixture
-def bounds():
-    return torch.tensor(
-        [[-10, 10], [-10, 10], [-10, 10]],
-        device=torch.device("cuda")
-        )
+def dataset_root_dir():
+    return Path(__file__).resolve().parents[1] / "src/v2w/datasets"
+
 
 @pytest.fixture
-def res():
-    return torch.tensor(
-        [0.1, 0.1, 0.1],
-        device=torch.device("cuda")
-        )
+def tum_dataset_ext_data_path(dataset_root_dir):
+    return dataset_root_dir / "tum_visual_inertial_dataset"
+
+
+
+# |---> Point test fixtures
 
 @pytest.fixture
-def pts_cloud(bounds, res):
-    return PointCloud(bounds, res)
-
-
-
-# |---> Projection test fixtures
-
-@pytest.fixture
-def W():
-    return torch.tensor(
-        [[ 0.70710678, 0.0,  0.70710678, 0.0],
-         [ 0.0,        1.0,  0.0,        0.0],
-         [-0.70710678, 0.0,  0.70710678, 0.0]],
-        dtype=torch.float64
+def p1():
+    return Point(
+        coords = torch.tensor([1, 2, 3]),
+        covariance = torch.tensor([[0.5, 0.3, 0.4], [0.1, 0.1, 0.2], [0.52, 0.13, 0.41]]),
+        color = torch.tensor([121, 10, 204]),
+        alpha = torch.tensor([0.5])
     )
 
-
 @pytest.fixture
-def K():
-    return torch.tensor(
-        [[800., 0., 320.],
-         [0., 800., 240.],
-         [0., 0., 1.]],
-        dtype=torch.float64
+def p2():
+    return Point(
+        coords = torch.tensor([2.3, 0.1, -3]),
+        covariance = torch.tensor([[0.5, 0.3, 0.4], [0.1, 0.1, 0.2], [0.52, 0.13, 0.41]]),
+        color = torch.tensor([40, 1, 74]),
+        alpha = torch.tensor([0.8])
     )
 
 
 
-    
-
-
-#====================================================
-# Rendering fixtures
-#====================================================
+# |---> Points test fixtures
 
 @pytest.fixture
-def img_empty():
-    H, W = 480, 640
-    return torch.zeros(
-        (H, W, 3), 
-        dtype=torch.float32, 
-        device=torch.device("cuda")
-        )
+def pts1():
+    return Points(
+        coords = torch.tensor([
+            [1, 2, 3], 
+            [2.3, 0.1, -3]
+            ]),
+        covariances = torch.tensor([
+            [[0.5, 0.3, 0.4], [0.1, 0.1, 0.2], [0.52, 0.13, 0.41]],
+            [[0.5, 0.3, 0.4], [0.1, 0.1, 0.2], [0.52, 0.13, 0.41]]
+            ]),
+        colors = torch.tensor([
+            [121, 10, 204], 
+            [1, 2, 3]
+            ]),
+        alphas = torch.tensor([0.5, 0.8])
+    )
+
+@pytest.fixture
+def pts2():
+    return Points(
+        coords = torch.tensor([
+            [4, 5, 6], 
+            [-4, -5, -6]
+            ]),
+        covariances = torch.tensor([
+            [[0.3, 0.3, 0.3], [0.1, 0.1, 0.2], [0.13, 0.13, 0.41]],
+            [[0.4, 0.4, 0.4], [0.3, 0.4, 0.9], [0.5, 0.13, 0.13]]
+            ]),
+        colors = torch.tensor([
+            [40, 1, 74], 
+            [67, 1, 8]
+            ]),
+        alphas = torch.tensor([0.3, 0.4])
+    )
+
+
+
 
