@@ -7,8 +7,8 @@ Camera geometry and projection utilities
 
 import torch
 import pandas as pd
+import numpy as np
 from typing import Tuple, Iterable, Optional
-from dataclasses import classmethod
 from v2w.config.types import CamConfig
 
 
@@ -70,7 +70,6 @@ class Camera:
         
         
         
-
     @classmethod
     def extrinsic_to_view(cls, R: torch.Tensor) -> Tuple[float, float]:
         """

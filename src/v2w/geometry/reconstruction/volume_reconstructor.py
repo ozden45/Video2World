@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Iterable
 import numpy as np
 from dataclasses import dataclass
 from .img_to_sfm import reconstruct_img_to_sfm

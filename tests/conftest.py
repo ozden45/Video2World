@@ -1,3 +1,16 @@
+
+pytest_plugins = [
+    "tests.fixtures.paths",
+    "tests.fixtures.images",
+    "tests.fixtures.tensors",
+    "tests.fixtures.models",
+    "tests.fixtures.datasets",
+    "tests.fixtures.geometry",
+    "tests.fixtures.config",
+]
+
+
+
 import pytest
 from pathlib import Path
 from v2w.geometry.points import *
@@ -5,51 +18,11 @@ from v2w.geometry.points import *
 
 
 
-#====================================================
-# Config test fixtures
-#====================================================
-
-@pytest.fixture
-def cfgs_root_dir():
-    return Path(__file__).resolve().parents[1] / "configs"
-
-@pytest.fixture
-def cam_cfg_path(cfgs_root_dir):
-    return cfgs_root_dir / "cam.yaml"
-
-@pytest.fixture
-def dataset_cfg_path(cfgs_root_dir):
-    return cfgs_root_dir / "dataset.yaml"
-
-@pytest.fixture
-def default_cfg_path(cfgs_root_dir):
-    return cfgs_root_dir / "default.yaml"
-
-@pytest.fixture
-def model_cfg_path(cfgs_root_dir):
-    return cfgs_root_dir / "model.yaml"
-
-@pytest.fixture
-def train_cfg_path(cfgs_root_dir):
-    return cfgs_root_dir / "train.yaml"
 
 
 
 
 
-#====================================================
-# Geometry test fixtures
-#====================================================
-
-
-@pytest.fixture
-def dataset_root_dir():
-    return Path(__file__).resolve().parents[1] / "src/v2w/datasets"
-
-
-@pytest.fixture
-def tum_dataset_ext_data_path(dataset_root_dir):
-    return dataset_root_dir / "tum_visual_inertial_dataset"
 
 
 

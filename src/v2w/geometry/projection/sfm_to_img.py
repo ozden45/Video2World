@@ -1,4 +1,5 @@
 import torch
+from typing import Tuple
 from ..points import SFMPoints, ImagePoints
 from .sfm_to_cam import project_sfm_to_cam, project_sfm_to_cam_tensor
 from .cam_to_ray import project_cam_to_ray, project_cam_to_ray_tensor

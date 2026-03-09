@@ -1,4 +1,5 @@
 import torch
+from typing import Tuple
 from ..points import RayPoints, ImagePoints
 from ...exception import ShapeError
 
