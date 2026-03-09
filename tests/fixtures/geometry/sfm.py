@@ -1,6 +1,6 @@
 import torch
 import pytest
-from v2w.geometry.points import SFMPoints, SFMPointCloud
+from v2w.geometry.points import SFMPoints, SFMPointsBatched
 
 
 
@@ -28,7 +28,7 @@ def sfm_pts():
 
 @pytest.fixture
 def sfm_pts1():
-    return Points(
+    return SFMPoints(
         coords = torch.tensor([[1,    2,  3], 
                                [2.3, .1, -3]]),
         covariances = torch.tensor([[[ 0.5,  0.3,  0.4], 
@@ -45,7 +45,7 @@ def sfm_pts1():
 
 @pytest.fixture
 def sfm_pts2():
-    return Points(
+    return SFMPoints(
         coords = torch.tensor([[ 4,  5,  6], 
                                [-4, -5, -6]]),
         covariances = torch.tensor([[[ 0.3,  0.3,  0.3], 
@@ -58,5 +58,16 @@ def sfm_pts2():
                                [67, 1,  8]]),
         alphas = torch.tensor([0.3, 0.4])
     )
+    
+    
+    
+@pytest.fixture
+def sfm_pts_batched(sfm_pts1, sfm_pts2):
+    pts_batched = SFMPointsBatched(num_points=2)
+    pts_batched.add_batch(sfm_pts1)
+    pts_batched.add_batch(sfm_pts2)
+    
+    return pts_batched
+    
     
     

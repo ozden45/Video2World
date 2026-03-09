@@ -1,7 +1,10 @@
-from .base import Point, Points
+from .base import Point, Points, PointsBatched
 
-class CamPoint(Point):
+class CameraPoint(Point):
     pass
 
-class CamPoints(Points):
+class CameraPoints(Points):
+    pass
+
+class CameraPointsBatched(PointsBatched):
     pass
