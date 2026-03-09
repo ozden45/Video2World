@@ -1,5 +1,6 @@
 from __future__ import annotations
 import torch
+from typing import List
 from dataclasses import dataclass, InitVar
 import logging
 import open3d as o3d
@@ -8,10 +9,10 @@ import open3d as o3d
 
 @dataclass
 class Point:
-    coords: torch.Tensor       # 3D coordinates
-    covariance: torch.Tensor   # Covariance matrix
-    color: torch.Tensor        # Color information
-    alpha: torch.Tensor        # Opacity
+    coords: torch.Tensor
+    covariance: torch.Tensor
+    color: torch.Tensor
+    alpha: torch.Tensor
     
     device: InitVar[torch.device | str | None] = None
     dtype: InitVar[torch.dtype | str | None] = None
@@ -26,7 +27,7 @@ class Point:
         self.coords = self.coords.to(dtype=dtype, device=device)
         self.covariance = self.covariance.to(dtype=dtype, device=device)
         self.color = self.color.to(dtype=torch.uint8, device=device)
-        self.alpha = self.alpha.to(dtype=torch.float32, device=device)
+        self.alpha = self.alpha.to(dtype=dtype, device=device)
 
     def __eq__(self, other: Point):
         return (
@@ -59,8 +60,9 @@ class Points:
     covariances: torch.Tensor
     colors: torch.Tensor
     alphas: torch.Tensor
-    num_batch: int
-
+    
+    num_points: int = 0
+    
     device: InitVar[torch.device | str | None] = None
     dtype: InitVar[torch.dtype | str | None] = None
 
@@ -71,8 +73,15 @@ class Points:
         # Resolve dtype
         dtype = self._resolve_dtype(dtype)
         
-        # Check points' shape    
+        # Check points' shape
         self._check_shape()
+        
+        self.coords = self.coords.to(dtype=dtype, device=device)
+        self.covariances = self.covariances.to(dtype=dtype, device=device)
+        self.colors = self.colors.to(dtype=torch.uint8, device=device)
+        self.alphas = self.alphas.to(dtype=dtype, device=device)
+        
+        self.num_points = self.alphas.shape[0]
         
     def __eq__(self, other: Points):
         return (
@@ -89,13 +98,12 @@ class Points:
         return f"Points(coords: {self.coords.shape}, covariances: {self.covariances.shape}, colors: {self.colors.shape}, alphas: {self.alphas.shape})"
 
     def __iadd__(self, other: Points):
-        if self.num_batch != other.num_batch:
-            raise ValueError(f"The number of batches for two point clusters does not match, ({self.num_batch} != {other.num_batch})")
-        
         self.coords = torch.cat([self.coords, other.coords], dim=0)
         self.covariances = torch.cat([self.covariances, other.covariances], dim=0)
         self.colors = torch.cat([self.colors, other.colors], dim=0)
         self.alphas = torch.cat([self.alphas, other.alphas], dim=0)
+            
+        self.num_points += self.alphas.shape[0]
             
         # TODO: Solve point duplications
         
@@ -154,3 +162,77 @@ class Points:
         maxs = self.coords.max(dim=0).values
         return torch.stack([mins, maxs], dim=1)
     
+
+
+@dataclass
+class PointsBatched:
+    coords: torch.Tensor
+    covariances: torch.Tensor
+    colors: torch.Tensor
+    alphas: torch.Tensor
+    
+    num_batch: int = 0
+    num_points: int = 0
+    
+    device: InitVar[torch.device | str | None] = None
+    dtype: InitVar[torch.dtype | str | None] = None
+
+    def __post_init__(self, device=None, dtype=None):
+        # Resolve device
+        device = self._resolve_device(device)
+            
+        # Resolve dtype
+        dtype = self._resolve_dtype(dtype)
+        
+        self.coords = torch.empty((0, self.num_points, 3),
+                                  dtype=dtype,
+                                  device=device)
+        self.covariances = torch.empty((0, self.num_points, 3, 3),
+                                       dtype=dtype,
+                                       device=device)
+        self.colors = torch.empty((0, self.num_points, 3),
+                                  dtype=dtype,
+                                  device=device)
+        self.alphas = torch.empty((0, self.num_points),
+                                  dtype=dtype,
+                                  device=device)
+        
+    def _resolve_device(self, device):
+        if device is None:
+            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            return torch.device(device)
+        
+    def _resolve_dtype(self, dtype):
+        if dtype is None:
+            return torch.float32
+        else:
+            return torch.as_tensor(1, dtype=dtype).dtype
+
+    def _is_equal_num_points(self, points: Points):
+        return True if self.num_points == points.num_points else False
+            
+
+    def add_batch(self, points: Points):
+        if not self._is_equal_num_points(points):
+            raise ValueError(f"Number of points is not equal, expected {self.num_points}")
+
+        points.coords = points.coords.unsqueeze(0)
+        points.covariances = points.covariances.unsqueeze(0)
+        points.colors = points.colors.unsqueeze(0)
+        points.alphas = points.alphas.unsqueeze(0)
+        
+        self.coords = torch.cat([self.coords, points.coords], dim=0)
+        self.covariances = torch.cat([self.coords, points.covariances], dim=0)
+        self.colors = torch.cat([self.coords, points.colors], dim=0)
+        self.alphas = torch.cat([self.coords, points.alphas], dim=0)
+
+        self.num_batch += 1
+
+    def extract_all_points(self) -> Points:
+        return Points(
+            coords=self.coords.reshape(-1, 3),
+            covariances=self.covariances.reshape(-1, 3, 3),
+            colors=self.colors.reshape(-1, 3),
+            alphas=self.alphas.reshape(-1)
+        )

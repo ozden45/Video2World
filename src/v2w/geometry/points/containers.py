@@ -31,7 +31,7 @@ class PointCloud:
         self.res = self.res.to(device=device, dtype=dtype).squeeze()
 
         self.shape = self._compute_shape()
-        self._allocate_storage()
+        self._allocate_storage(device)
 
     def _validate_inputs(
         self, 

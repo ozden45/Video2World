@@ -21,12 +21,9 @@ def intrinsic():
 @pytest.fixture
 def cam_pts():
     return CamPoints(
-        coords=torch.tensor(
-            [[ 4.2426, 2.0000,  2.8284],
-             [ 7.0711, 1.0000,  4.2426],
-             [ 3.5355, 3.0000,  4.9497]],
-            dtype=torch.float64
-        ),
+        coords=torch.tensor([[ 4.2426, 2.0000,  2.8284],
+                             [ 7.0711, 1.0000,  4.2426],
+                             [ 3.5355, 3.0000,  4.9497]], dtype=torch.float64),
         covariances=torch.tensor([[[0.0140, 0.0035,  0.0015],
                                    [0.0035, 0.0150,  0.0020],
                                    [0.0015, 0.0020,  0.0160]],

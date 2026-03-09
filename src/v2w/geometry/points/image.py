@@ -3,9 +3,12 @@ import torch
 import matplotlib.pyplot as plt
 import logging
 import open3d as o3d
-from .base import Point, Points
+from .base import Point, Points, PointsBatched
 from v2w.exception import ShapeError
 
+
+
+logger = logging.getLogger(__name__)
 
 
 class ImagePoint(Point):
@@ -14,16 +17,19 @@ class ImagePoint(Point):
 
 class ImagePoints(Points):
     def __post_init__(self, device=None, dtype=None):
-        if device is None:
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        else:
-            device = torch.device(device)
+        # Resolve device
+        device = self._resolve_device(device)
             
         # Resolve dtype
-        dtype = torch.float32 if dtype is None else dtype
+        dtype = self._resolve_dtype(dtype)
         
         # Check points' shape    
         self._check_shape()
+        
+        self.coords = self.coords.to(dtype=dtype, device=device)
+        self.covariances = self.covariances.to(dtype=dtype, device=device)
+        self.colors = self.colors.to(dtype=torch.uint8, device=device)
+        self.alphas = self.alphas.to(dtype=dtype, device=device)
     
     
     def _check_shape(self):
@@ -52,32 +58,70 @@ class ImagePoints(Points):
     
     
     @classmethod
-    def load_from_frame(cls, frames: torch.Tensor, depth: torch.Tensor) -> ImagePoints:
-        B, H, W = frames[0], frames[2], frames[3]
+    def load_from_frame(cls, frame: torch.Tensor) -> ImagePoints:
+        
+        logger.debug("Loaded frame with shape %s", frame.shape)
+        
+        H, W = int(frame.shape[0]), int(frame.shape[1])
         
         x = torch.arange(H)
         y = torch.arange(W)
         xy = torch.cartesian_prod(x, y)
-        z = depth.flatten().unsqueeze(-1)
         
-        N = frames.shape[0] * frames.shape[1]
+        N = frame.shape[0] * frame.shape[1]
+        
+        logger.debug("coords.shape: %s", xy.shape)
+        logger.debug("covs.shape: %s", torch.rand(N, 2, 2).shape)
+        logger.debug("colors.shape: %s", frame.reshape(-1, 3).shape)
+        logger.debug("alphas.shape: %s", torch.rand(N).shape)
         
         return ImagePoints(
-            coords = torch.cat([xy, z], dim=1).repeat(B, 1),
+            coords = xy,
             covariances = torch.rand(N, 2, 2),
-            colors = frames.reshape(-1, 3),
+            colors = frame.reshape(-1, 3),
             alphas = torch.rand(N)
         )
             
-                
     def scatter(self, step):
         fig = plt.figure()
         ax = fig.add_subplot()
 
         xs, ys = (self.coords[::step, 0], self.coords[::step, 1])
-        rgba = torch.cat([self.colors[::step]/255, self.alphas[::step]], dim=1)
+        rgba = torch.cat([self.colors[::step] / 255, self.alphas[::step]], dim=1)
         ax.scatter(xs, ys, s=2, c=rgba)
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
     
         plt.show()
+        
+    
+
+class ImagePointsBatched(PointsBatched):
+    def __post_init__(self, device=None, dtype=None):
+        # Resolve device
+        device = self._resolve_device(device)
+            
+        # Resolve dtype
+        dtype = self._resolve_dtype(dtype)
+        
+        self.coords = torch.empty((0, self.num_points, 3),
+                                  dtype=dtype,
+                                  device=device)
+        self.covariances = torch.empty((0, self.num_points, 3, 3),
+                                       dtype=dtype,
+                                       device=device)
+        self.colors = torch.empty((0, self.num_points, 3),
+                                  dtype=dtype,
+                                  device=device)
+        self.alphas = torch.empty((0, self.num_points, 3),
+                                  dtype=dtype,
+                                  device=device)
+    
+    def extract_all_points(self) -> ImagePoints:
+        return ImagePoints(
+            coords=self.coords.reshape(-1, 2),
+            covariances=self.covariances.reshape(-1, 2, 2),
+            colors=self.colors.reshape(-1, 3),
+            alphas=self.alphas.reshape(-1)
+        )
+    

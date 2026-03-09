@@ -1,5 +1,8 @@
 import torch
 from torch.utils.data import DataLoader
+from torchvision import transforms
+import cv2
+import logging
 from pathlib import Path
 from typing import Tuple, Iterable
 import numpy as np
@@ -9,6 +12,9 @@ from ..points.sfm import SFMPoints, SFMPointCloud
 from ..points.image import ImagePoints
 from ...models import MonocularDepthModel
 
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -25,6 +31,7 @@ class VolumeReconstructor:
     """
     
     depth_model: MonocularDepthModel = MonocularDepthModel()
+    transform: transforms = transforms.Resize((1213, 1546))
     bounds: torch.Tensor = torch.tensor(
         [[0, 10],
          [0, 10],
@@ -119,16 +126,21 @@ class VolumeReconstructor:
         )
         
         for batch in loader:
-            images = batch["images"]
-            T_w_c0 = batch["T_w_c0"]
-         
-            sfm_pts = self._reconstruct_single_frame(
-                frame=images[:, 0, :, :, :],
-                depth=None,
-                extrinsics=T_w_c0[:, :3, :3]
-            )
+            images = self.transform(batch["images"][:, 0, :, :, :].squeeze(1))
+            images = np.array(images)
             
-            sfm_pcd.add_pts(sfm_pts)
+            T_w_c0 = self.transform(batch["T_w_c0"][:, :3, :3])
+            logging.debug("Image shape %s", images.shape)
+            for image in images:
+                depth = self.depth_model(image.transpose(1, 2, 0))
+            
+                sfm_pts = self._reconstruct_single_frame(
+                    frame=image.transpose(1, 2, 0),
+                    depth=depth,
+                    extrinsics=T_w_c0
+                )
+            
+                sfm_pcd.add_pts(sfm_pts)
             
         return sfm_pcd
             
@@ -190,7 +202,7 @@ class VolumeReconstructor:
 
         This method isolates frame-level reconstruction logic.
         """
-        img_pts = ImagePoints.load_from_frame(frame, depth)
+        img_pts = ImagePoints.load_from_frame(frame)
 
         return reconstruct_img_to_sfm(
             img_pts,
