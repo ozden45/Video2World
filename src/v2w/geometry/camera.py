@@ -9,14 +9,14 @@ import torch
 import pandas as pd
 import numpy as np
 from typing import Tuple, Iterable, Optional
-from v2w.config.types import CamConfig
+from v2w.config.types import CameraConfig
 
 
 
 
 
 class Camera:
-    def __init__(self, cfg: CamConfig):
+    def __init__(self, cfg: CameraConfig):
         self.config = cfg
         self.intrinsics = self._set_intrinsics()
         

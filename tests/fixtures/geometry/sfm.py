@@ -26,6 +26,7 @@ def sfm_pts():
     )
 
 
+
 @pytest.fixture
 def sfm_pts1():
     return SFMPoints(
@@ -41,6 +42,7 @@ def sfm_pts1():
                                [  1,  2,   3]]),
         alphas = torch.tensor([0.5, 0.8])
     )
+
 
 
 @pytest.fixture
@@ -68,6 +70,5 @@ def sfm_pts_batched(sfm_pts1, sfm_pts2):
     pts_batched.add_batch(sfm_pts2)
     
     return pts_batched
-    
     
     

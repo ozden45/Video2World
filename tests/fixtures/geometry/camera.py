@@ -1,6 +1,6 @@
 import pytest
 import torch
-from v2w.geometry.points import CamPoints
+from v2w.geometry.points import CameraPoints
 
 
 
@@ -20,7 +20,7 @@ def intrinsic():
     
 @pytest.fixture
 def cam_pts():
-    return CamPoints(
+    return CameraPoints(
         coords=torch.tensor([[ 4.2426, 2.0000,  2.8284],
                              [ 7.0711, 1.0000,  4.2426],
                              [ 3.5355, 3.0000,  4.9497]], dtype=torch.float64),

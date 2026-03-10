@@ -13,7 +13,7 @@ def reconstruct_img_to_sfm(img_pts: ImagePoints, W: torch.Tensor, K: torch.Tenso
         W (torch.Tensor): The extrinsic camera parameter matrix.
         K (torch.Tensor): The intrinsic camera parameter matrix.
     Returns:
-        sfm_pts (CamPoints): The points in the world space.
+        sfm_pts (CameraPoints): The points in the world space.
     """
 
     ray_pts = reconstruct_img_to_ray(img_pts, K)
@@ -31,7 +31,7 @@ def reconstruct_img_to_sfm_tensor(img_pts: ImagePoints, W: torch.Tensor, K: torc
         W (torch.Tensor): The extrinsic camera parameter matrix.
         K (torch.Tensor): The intrinsic camera parameter matrix.
     Returns:
-        sfm_pts (CamPoints): The points in the world space.
+        sfm_pts (CameraPoints): The points in the world space.
     """
 
     ray_pts = reconstruct_img_to_ray_tensor(img_pts, K)

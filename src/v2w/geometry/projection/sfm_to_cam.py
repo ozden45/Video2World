@@ -1,17 +1,17 @@
 import torch
 from typing import Tuple
-from ..points import SFMPoints, CamPoints
+from ..points import SFMPoints, CameraPoints
 from ...exception import ShapeError
 
 
-def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CamPoints:
+def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CameraPoints:
     """
     Projects SfM points from world to camera space.
     Args:   
         sfm_pts (SFMPoints): The points in the world space.
         W (torch.Tensor): The extrinsic camera parameters.
     Returns:
-        cam_pts (CamPoints): The points in the camera space.
+        cam_pts (CameraPoints): The points in the camera space.
     """
     # Check the shape of W
     if W.shape != (3, 4):
@@ -31,8 +31,8 @@ def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CamPoints:
     cam_coords = (R @ sfm_pts.coords.T).T + t
     cam_covariances = R @ sfm_pts.covariances @ R.transpose(-2, -1)
     
-    # Create the CamPoints object
-    cam_pts = CamPoints(
+    # Create the CameraPoints object
+    cam_pts = CameraPoints(
         coords=cam_coords,
         covariances=cam_covariances,
         colors=sfm_pts.colors,
@@ -50,7 +50,7 @@ def project_sfm_to_cam_tensor(sfm_coords: torch.Tensor, sfm_covariances: torch.T
         sfm_pts (SFMPoints): The points in the world space.
         W (torch.Tensor): The extrinsic camera parameters.
     Returns:
-        cam_pts (CamPoints): The points in the camera space.
+        cam_pts (CameraPoints): The points in the camera space.
     """
     # Check the shape of W
     if W.shape != (3, 4):

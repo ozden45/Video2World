@@ -4,7 +4,7 @@ from pathlib import Path
 
 @pytest.fixture
 def cfgs_root_dir():
-    return Path(__file__).resolve().parents[1] / "configs"
+    return Path(__file__).resolve().parents[2] / "configs"
 
 @pytest.fixture
 def cam_cfg_path(cfgs_root_dir):

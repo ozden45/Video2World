@@ -4,11 +4,11 @@ import numpy as np
 import csv
 from pathlib import Path
 from .utils import is_path_exists
-from .config.types import CamConfig
+from .config.types import CameraConfig
 
 
     
-def load_intrinsic_mat(cfg: CamConfig) -> torch.Tensor:
+def load_intrinsic_mat(cfg: CameraConfig) -> torch.Tensor:
     """
     Docstring for compute_int_cam_mat
     

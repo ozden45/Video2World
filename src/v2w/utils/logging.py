@@ -7,7 +7,7 @@ def setup_logging(log_file=None):
     level = os.getenv("LOG_LEVEL", "INFO").upper()
 
     formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+        "%(asctime)s | %(levelname)s | %(filename)s:%(lineno)d | %(message)s"
     )
 
     root = logging.getLogger()

@@ -1,14 +1,14 @@
 import torch
-from ..points import RayPoints, CamPoints
+from ..points import RayPoints, CameraPoints
 
 
-def reconstruct_ray_to_cam(ray_pts: RayPoints) -> CamPoints:
+def reconstruct_ray_to_cam(ray_pts: RayPoints) -> CameraPoints:
     """
     Reconstructs 3D points from ray to cam space.
     Args:   
         ray_pts (RayPoints): The points in the ray space.
     Returns:
-        cam_pts (CamPoints): The points in the cam space.
+        cam_pts (CameraPoints): The points in the cam space.
     """
     
     # cam to ray
@@ -34,7 +34,7 @@ def reconstruct_ray_to_cam(ray_pts: RayPoints) -> CamPoints:
     J_inv = torch.linalg.inv(J)
     cam_covariances = J_inv @ ray_pts.covariances @ J_inv.transpose(-2, -1)  # (N,3,3)
 
-    cam_pts = CamPoints()
+    cam_pts = CameraPoints()
     cam_pts.coords = cam_coords
     cam_pts.covariances = cam_covariances
 
@@ -42,13 +42,13 @@ def reconstruct_ray_to_cam(ray_pts: RayPoints) -> CamPoints:
 
 
 
-def reconstruct_ray_to_cam_tensor(ray_pts: RayPoints) -> CamPoints:
+def reconstruct_ray_to_cam_tensor(ray_pts: RayPoints) -> CameraPoints:
     """
     Reconstructs 3D points from ray to cam space.
     Args:   
         ray_pts (RayPoints): The points in the ray space.
     Returns:
-        cam_pts (CamPoints): The points in the cam space.
+        cam_pts (CameraPoints): The points in the cam space.
     """
     
     # cam to ray
@@ -74,7 +74,7 @@ def reconstruct_ray_to_cam_tensor(ray_pts: RayPoints) -> CamPoints:
     J_inv = torch.linalg.inv(J)
     cam_covariances = J_inv @ ray_pts.covariances @ J_inv.transpose(-2, -1)  # (N,3,3)
 
-    cam_pts = CamPoints()
+    cam_pts = CameraPoints()
     cam_pts.coords = cam_coords
     cam_pts.covariances = cam_covariances
 

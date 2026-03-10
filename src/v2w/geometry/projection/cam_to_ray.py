@@ -1,14 +1,14 @@
 import torch
 from typing import Tuple
-from ..points import CamPoints, RayPoints
+from ..points import CameraPoints, RayPoints
 from ...exception import ShapeError
 
 
-def project_cam_to_ray(cam_pts: CamPoints) -> RayPoints:
+def project_cam_to_ray(cam_pts: CameraPoints) -> RayPoints:
     """
     Projects 3D points from camera to ray space.
     Args:   
-        cam_pts (CamPoints): The points in the camera space.
+        cam_pts (CameraPoints): The points in the camera space.
     Returns:
         ray_pts (RayPoints): The points in the ray space.
     """
@@ -43,7 +43,7 @@ def project_cam_to_ray_tensor(cam_coords: torch.Tensor, cam_covariances: torch.T
     """
     Projects 3D points from camera to ray space.
     Args:   
-        cam_pts (CamPoints): The points in the camera space.
+        cam_pts (CameraPoints): The points in the camera space.
     Returns:
         ray_pts (RayPoints): The points in the ray space.
     """

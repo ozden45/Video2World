@@ -12,13 +12,13 @@ Responsible for:
 from pathlib import Path
 import yaml
 from dataclasses import asdict
-from v2w.config.types import Config, CamConfig, DatasetConfig, ModelConfig, TrainConfig
+from v2w.config.types import Config, CameraConfig, DatasetConfig, ModelConfig, TrainConfig
 from v2w.io import load_yaml
 from v2w.utils.misc import is_path_exists
 
 
 
-def load_cam_config(path: str | Path) -> CamConfig:
+def load_cam_config(path: str | Path) -> CameraConfig:
     """Load camera configuration"""
     
     # Check that path exists
@@ -26,7 +26,7 @@ def load_cam_config(path: str | Path) -> CamConfig:
         raise FileNotFoundError(f"The path {path} is not found")
 
     raw = load_yaml(path)
-    return CamConfig.from_dict(raw)
+    return CameraConfig.from_dict(raw)
 
 
 def load_dataset_config(path: str | Path) -> DatasetConfig:

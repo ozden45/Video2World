@@ -132,10 +132,10 @@ class VolumeReconstructor:
             T_w_c0 = self.transform(batch["T_w_c0"][:, :3, :3])
             logging.debug("Image shape %s", images.shape)
             for image in images:
-                depth = self.depth_model(image.transpose(1, 2, 0))
-            
+                depth = self.depth_model(np.transpose(image, axes=(1, 2, 0)))
+
                 sfm_pts = self._reconstruct_single_frame(
-                    frame=image.transpose(1, 2, 0),
+                    frame=torch.Tensor(image).permute(1, 2, 0),
                     depth=depth,
                     extrinsics=T_w_c0
                 )

@@ -45,7 +45,7 @@ class DatasetConfig(BaseConfig):
 #----------------------------------
 
 @dataclass
-class IntrinsicCamConfig(BaseConfig):
+class IntrinsicCameraConfig(BaseConfig):
     f_mm: float
     sensor_width_mm: float
     sensor_height_mm: float
@@ -53,13 +53,13 @@ class IntrinsicCamConfig(BaseConfig):
     height_px: int
 
 @dataclass
-class ExtrinsicCamConfig(BaseConfig):
+class ExtrinsicCameraConfig(BaseConfig):
     csv_data_path: str
         
 @dataclass
-class CamConfig(BaseConfig):
-    intrinsic: IntrinsicCamConfig
-    extrinsic: ExtrinsicCamConfig
+class CameraConfig(BaseConfig):
+    intrinsic: IntrinsicCameraConfig
+    extrinsic: ExtrinsicCameraConfig
 
 
 #----------------------------------
@@ -71,7 +71,7 @@ class Config(BaseConfig):
     #training: TrainConfig
     #model: ModelConfig
     #dataset: DatasetConfig
-    camera: CamConfig
+    camera: CameraConfig
     
 
 

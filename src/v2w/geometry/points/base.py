@@ -121,11 +121,6 @@ class Points:
                  self.colors.shape[0], 
                  self.alphas.shape[0]}) == 1 and
             
-            len({self.coords.shape[1], 
-                 self.covariances.shape[1], 
-                 self.colors.shape[1], 
-                 self.alphas.shape[1]}) == 1 and
-            
             self.coords.ndim == 3 and
             self.coords.shape[-1] == 3 and
 

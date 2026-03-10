@@ -1,4 +1,7 @@
 import pytest
 
 
-def test_
+def test_points():
+    pass
+
+

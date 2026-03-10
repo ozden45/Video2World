@@ -1,12 +1,12 @@
 import torch
-from ..points import CamPoints, SFMPoints
+from ..points import CameraPoints, SFMPoints
 
 
-def reconstruct_cam_to_sfm(cam_pts: CamPoints, W: torch.Tensor) -> SFMPoints:
+def reconstruct_cam_to_sfm(cam_pts: CameraPoints, W: torch.Tensor) -> SFMPoints:
     """
     Reconstructs 3D points from cam to world space.
     Args:   
-        cam_pts (CamPoints): The points in the cam space.
+        cam_pts (CameraPoints): The points in the cam space.
         W (torch.Tensor): The extrinsic camera parameter matrix.
     Returns:
         sfm_pts (SFMPoints): The points in the world space.
@@ -27,11 +27,11 @@ def reconstruct_cam_to_sfm(cam_pts: CamPoints, W: torch.Tensor) -> SFMPoints:
     return sfm_pts
     
 
-def reconstruct_cam_to_sfm_tensor(cam_pts: CamPoints, W: torch.Tensor) -> SFMPoints:
+def reconstruct_cam_to_sfm_tensor(cam_pts: CameraPoints, W: torch.Tensor) -> SFMPoints:
     """
     Reconstructs 3D points from cam to world space.
     Args:   
-        cam_pts (CamPoints): The points in the cam space.
+        cam_pts (CameraPoints): The points in the cam space.
         W (torch.Tensor): The extrinsic camera parameter matrix.
     Returns:
         sfm_pts (SFMPoints): The points in the world space.
