@@ -44,7 +44,7 @@ def project_sfm_to_cam(sfm_pts: SFMPoints, Rt: torch.Tensor) -> CameraPoints:
 
 
 
-def project_sfm_to_cam_batched(sfm_pts: SFMPointsBatched, Rt_batched: torch.Tensor) -> CameraPointsBatched:
+def project_sfm_to_cam_batched(sfm_batched: SFMPointsBatched, Rt_batched: torch.Tensor) -> CameraPointsBatched:
     """
     Projects SfM points from world to camera space for multiple cameras.
 
@@ -65,8 +65,8 @@ def project_sfm_to_cam_batched(sfm_pts: SFMPointsBatched, Rt_batched: torch.Tens
 
     # Match dtype and device
     Rt_batched = Rt_batched.to(
-        dtype=sfm_pts.coords.dtype, 
-        device=sfm_pts.coords.device
+        dtype=sfm_batched.coords.dtype, 
+        device=sfm_batched.coords.device
     )
 
     R = Rt_batched[:, :, :3]
@@ -75,18 +75,18 @@ def project_sfm_to_cam_batched(sfm_pts: SFMPointsBatched, Rt_batched: torch.Tens
     # Project world points into camera space
     cam_coords = torch.einsum('bij,bnj->bni', 
                               R, 
-                              sfm_pts.coords) + t.unsqueeze(1)
+                              sfm_batched.coords) + t.unsqueeze(1)
     cam_covariances = torch.einsum('bij,bnjk,bkl->bnil', 
                                    R, 
-                                   sfm_pts.covariances, 
+                                   sfm_batched.covariances, 
                                    R.transpose(-1,-2))
     
-    cam_pts = CameraPoints(
+    cam_batched = CameraPointsBatched(
         coords=cam_coords,
         covariances=cam_covariances,
-        colors=sfm_pts.colors,
-        alphas=sfm_pts.alphas
+        colors=sfm_batched.colors,
+        alphas=sfm_batched.alphas
     )
 
-    return cam_pts
+    return cam_batched
 
