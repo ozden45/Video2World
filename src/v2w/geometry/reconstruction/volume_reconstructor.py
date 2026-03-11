@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Tuple, Iterable
 import numpy as np
 from dataclasses import dataclass
-from .img_to_sfm import reconstruct_img_to_sfm
+from .img_to_sfm import reconstruct_img_to_sfm_batched
 from ..points.sfm import SFMPoints, SFMPointCloud
 from ..points.image import ImagePoints
 from ...models import MonocularDepthModel

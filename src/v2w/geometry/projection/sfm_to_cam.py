@@ -1,6 +1,6 @@
 import torch
 from typing import Tuple
-from ..points import SFMPoints, CameraPoints
+from ..points import SFMPoints, SFMPointsBatched, CameraPoints, CameraPointsBatched
 from ...exception import ShapeError
 
 
@@ -49,7 +49,7 @@ def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CameraPoints:
 
 
 
-def project_sfm_to_cam_batched(sfm_pts: SFMPoints, W: torch.Tensor) -> CameraPoints:
+def project_sfm_to_cam_batched(sfm_pts: SFMPointsBatched, Rt_batched: torch.Tensor) -> CameraPointsBatched:
     """
     Projects SfM points from world to camera space for multiple cameras.
 
@@ -63,31 +63,30 @@ def project_sfm_to_cam_batched(sfm_pts: SFMPoints, W: torch.Tensor) -> CameraPoi
             covariances: (B,N,3,3)
     """
 
-    if W.ndim != 3 or W.shape[1:] != (3, 4):
+    if Rt_batched.ndim != 3 or Rt_batched.shape[1:] != (3, 4):
         raise ShapeError(
-            f"project_sfm_to_cam_batched(): Invalid W shape {W.shape}, expected (B,3,4)."
+            f"project_sfm_to_cam_batched(): Invalid Rt_batched shape {Rt_batched.shape}, expected (B,3,4)."
         )
 
-    W = W.to(dtype=sfm_pts.coords.dtype, device=sfm_pts.coords.device)
+    Rt_batched = Rt_batched.to(
+        dtype=sfm_pts.coords.dtype, 
+        device=sfm_pts.coords.device
+    )
 
-    B = W.shape[0]
-    N = sfm_pts.coords.shape[0]
+    R = Rt_batched[:, :, :3]  # (B,3,3)
+    t = Rt_batched[:, :, 3]   # (B,3)
 
-    R = W[:, :, :3]  # (B,3,3)
-    t = W[:, :, 3]   # (B,3)
+    # Coordinates
+    # (B,N,3) = (B,3,3) x (N,3) + (B,3)
+    cam_coords = torch.einsum('bij,bnj->bni', R, sfm_pts.coords) + t.unsqueeze(1)
 
-    # ---- Coordinates ----
-    # (B,N,3) = (B,3,3) x (N,3)
-    cam_coords = torch.matmul(
-        sfm_pts.coords.unsqueeze(0),   # (1,N,3)
-        R.transpose(1,2)               # (B,3,3)
-    ) + t.unsqueeze(1)                 # (B,N,3)
-
-    # ---- Covariances ----
-    cov = sfm_pts.covariances.unsqueeze(0)  # (1,N,3,3)
+    # Covariances
+    cam_covariances = torch.einsum('bij,bnjk,bkl->bnil', R, sfm_pts.covariances, R.transpose())
+    
+    cov = sfm_pts.covariances.unsqueeze(0)  # (B,N,3,3)
 
     cam_covariances = torch.matmul(
-        torch.matmul(R.unsqueeze(1), cov),  # (B,N,3,3)
+        torch.matmul(R.unsqueeze(1), sfm_pts.covariances),  # (B,N,3,3)
         R.transpose(1,2).unsqueeze(1)       # (B,N,3,3)
     )
 

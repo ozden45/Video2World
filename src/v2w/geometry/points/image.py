@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import logging
 import open3d as o3d
 from .base import Point, Points, PointsBatched
-from v2w.exception import ShapeError
-
+from ...exception import ShapeError
 
 
 logger = logging.getLogger(__name__)
