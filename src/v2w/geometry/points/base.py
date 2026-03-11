@@ -1,7 +1,7 @@
 from __future__ import annotations
 import torch
 from typing import List
-from dataclasses import dataclass, InitVar
+from dataclasses import dataclass, InitVar, field
 import logging
 import open3d as o3d
 
@@ -61,7 +61,7 @@ class Points:
     colors: torch.Tensor
     alphas: torch.Tensor
     
-    num_points: int = 0
+    _num_points: int = field(init=False, repr=False)
     
     device: InitVar[torch.device | str | None] = None
     dtype: InitVar[torch.dtype | str | None] = None
@@ -81,7 +81,7 @@ class Points:
         self.colors = self.colors.to(dtype=torch.uint8, device=device)
         self.alphas = self.alphas.to(dtype=dtype, device=device)
         
-        self.num_points = self.alphas.shape[0]
+        self._num_points = self.alphas.shape[0]
         
     def __eq__(self, other: Points):
         return (
@@ -103,7 +103,7 @@ class Points:
         self.colors = torch.cat([self.colors, other.colors], dim=0)
         self.alphas = torch.cat([self.alphas, other.alphas], dim=0)
             
-        self.num_points += self.alphas.shape[0]
+        self._num_points += self.alphas.shape[0]
             
         # TODO: Solve point duplications
         
@@ -116,26 +116,27 @@ class Points:
 
     def _check_shape(self):
         return (
+            # Check if num_points dimensions are equal
             len({self.coords.shape[0], 
                  self.covariances.shape[0], 
                  self.colors.shape[0], 
                  self.alphas.shape[0]}) == 1 and
             
-            self.coords.ndim == 3 and
+            # Check coordinates shape
+            self.coords.ndim == 2 and
             self.coords.shape[-1] == 3 and
 
-            self.covariances.ndim == 4 and
+            # Check covariances shape
+            self.covariances.ndim == 3 and
             self.covariances.shape[-2:] == (3,3) and
             
-            self.colors.ndim == 3 and
+            # Check colors shape
+            self.colors.ndim == 2 and
             self.colors.shape[-1] == 3 and
 
-            self.alphas.ndim == 2
+            # Check alphas shape
+            self.alphas.ndim == 1
         )
-        
-    @classmethod
-    def _is_empty(cls, tensor: torch.Tensor):
-        return tensor.shape[1] == 0
         
     def _resolve_device(self, device):
         if device is None:
@@ -148,6 +149,10 @@ class Points:
             return torch.float32
         else:
             return torch.as_tensor(1, dtype=dtype).dtype
+        
+    @property
+    def num_points(self):
+        return self._num_points
         
     @property
     def bounds(self):
@@ -166,8 +171,8 @@ class PointsBatched:
     colors: torch.Tensor
     alphas: torch.Tensor
     
-    num_batch: int = 0
-    num_points: int = 0
+    _num_batch: int = field(init=False, repr=False)
+    _num_points: int = field(init=False, repr=False)
     
     device: InitVar[torch.device | str | None] = None
     dtype: InitVar[torch.dtype | str | None] = None
@@ -179,18 +184,46 @@ class PointsBatched:
         # Resolve dtype
         dtype = self._resolve_dtype(dtype)
         
-        self.coords = torch.empty((0, self.num_points, 3),
-                                  dtype=dtype,
-                                  device=device)
-        self.covariances = torch.empty((0, self.num_points, 3, 3),
-                                       dtype=dtype,
-                                       device=device)
-        self.colors = torch.empty((0, self.num_points, 3),
-                                  dtype=dtype,
-                                  device=device)
-        self.alphas = torch.empty((0, self.num_points),
-                                  dtype=dtype,
-                                  device=device)
+        # Check points' shape
+        self._check_shape()
+        
+        self.coords = self.coords.to(dtype=dtype, device=device)
+        self.covariances = self.covariances.to(dtype=dtype, device=device)
+        self.colors = self.colors.to(dtype=torch.uint8, device=device)
+        self.alphas = self.alphas.to(dtype=dtype, device=device)
+        
+        self._num_batch = self.alphas.shape[0]
+        self._num_points = self.alphas.shape[1]
+        
+    def _check_shape(self):
+        return (
+            # Check if num_batch dimensions are equal
+            len({self.coords.shape[0], 
+                 self.covariances.shape[0], 
+                 self.colors.shape[0], 
+                 self.alphas.shape[0]}) == 1 and
+            
+            # Check if num_points dimensions are equal
+            len({self.coords.shape[1], 
+                 self.covariances.shape[1], 
+                 self.colors.shape[1], 
+                 self.alphas.shape[1]}) == 1 and
+            
+            # Check coordinates shape
+            self.coords.ndim == 3 and
+            self.coords.shape[-1] == 3 and
+
+            # Check covariances shape
+            self.covariances.ndim == 4 and
+            self.covariances.shape[-2:] == (3,3) and
+            
+            # Check colors shape
+            self.colors.ndim == 3 and
+            self.colors.shape[-1] == 3 and
+
+            # Check alphas shape
+            self.alphas.ndim == 2
+        )
         
     def _resolve_device(self, device):
         if device is None:
@@ -222,7 +255,7 @@ class PointsBatched:
         self.colors = torch.cat([self.coords, points.colors], dim=0)
         self.alphas = torch.cat([self.coords, points.alphas], dim=0)
 
-        self.num_batch += 1
+        self._num_batch += 1
 
     def extract_all_points(self) -> Points:
         return Points(
@@ -231,3 +264,11 @@ class PointsBatched:
             colors=self.colors.reshape(-1, 3),
             alphas=self.alphas.reshape(-1)
         )
+
+    @property
+    def num_points(self):
+        return self._num_points
+    
+    @property
+    def num_batch(self):
+        return self._num_batch

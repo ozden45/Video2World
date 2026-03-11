@@ -1,12 +1,10 @@
 import torch
-from typing import Tuple
 from ..points import SFMPoints, SFMPointsBatched, CameraPoints, CameraPointsBatched
 from ...exception import ShapeError
 
 
 
-
-def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CameraPoints:
+def project_sfm_to_cam(sfm_pts: SFMPoints, Rt: torch.Tensor) -> CameraPoints:
     """
     Projects SfM points from world to camera space.
 
@@ -19,22 +17,19 @@ def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CameraPoints:
     """
 
     # Check the shape of W
-    if W.shape != (3, 4):
+    if Rt.shape != (3, 4):
         raise ShapeError(
-            f"project_sfm_to_cam(): Invalid W shape {W.shape}, expected (3,4)."
+            f"project_sfm_to_cam(): Invalid W shape {Rt.shape}, expected (3,4)."
         )
 
-    # Match dtype/device
-    W = W.to(dtype=sfm_pts.coords.dtype, device=sfm_pts.coords.device)
+    # Match dtype and device
+    Rt = Rt.to(dtype=sfm_pts.coords.dtype, device=sfm_pts.coords.device)
 
     # Extract rotation and translation
-    R = W[:, :3]                 # (3,3)
-    t = W[:, 3]                  # (3,)
+    R = Rt[:, :3]
+    t = Rt[:, 3]
 
-    # Transform coordinates
     cam_coords = sfm_pts.coords @ R.T + t
-
-    # Transform covariances
     cam_covariances = R @ sfm_pts.covariances @ R.T
 
     # Create CameraPoints
@@ -68,28 +63,24 @@ def project_sfm_to_cam_batched(sfm_pts: SFMPointsBatched, Rt_batched: torch.Tens
             f"project_sfm_to_cam_batched(): Invalid Rt_batched shape {Rt_batched.shape}, expected (B,3,4)."
         )
 
+    # Match dtype and device
     Rt_batched = Rt_batched.to(
         dtype=sfm_pts.coords.dtype, 
         device=sfm_pts.coords.device
     )
 
-    R = Rt_batched[:, :, :3]  # (B,3,3)
-    t = Rt_batched[:, :, 3]   # (B,3)
+    R = Rt_batched[:, :, :3]
+    t = Rt_batched[:, :, 3]
 
-    # Coordinates
-    # (B,N,3) = (B,3,3) x (N,3) + (B,3)
-    cam_coords = torch.einsum('bij,bnj->bni', R, sfm_pts.coords) + t.unsqueeze(1)
-
-    # Covariances
-    cam_covariances = torch.einsum('bij,bnjk,bkl->bnil', R, sfm_pts.covariances, R.transpose())
+    # Project world points into camera space
+    cam_coords = torch.einsum('bij,bnj->bni', 
+                              R, 
+                              sfm_pts.coords) + t.unsqueeze(1)
+    cam_covariances = torch.einsum('bij,bnjk,bkl->bnil', 
+                                   R, 
+                                   sfm_pts.covariances, 
+                                   R.transpose(-1,-2))
     
-    cov = sfm_pts.covariances.unsqueeze(0)  # (B,N,3,3)
-
-    cam_covariances = torch.matmul(
-        torch.matmul(R.unsqueeze(1), sfm_pts.covariances),  # (B,N,3,3)
-        R.transpose(1,2).unsqueeze(1)       # (B,N,3,3)
-    )
-
     cam_pts = CameraPoints(
         coords=cam_coords,
         covariances=cam_covariances,
@@ -98,38 +89,4 @@ def project_sfm_to_cam_batched(sfm_pts: SFMPointsBatched, Rt_batched: torch.Tens
     )
 
     return cam_pts
-
-
-
-
-
-
-def project_sfm_to_cam_tensor(sfm_coords: torch.Tensor, sfm_covariances: torch.Tensor, W: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-    """
-    Projects SfM points from world to camera space.
-    Args:   
-        sfm_pts (SFMPoints): The points in the world space.
-        W (torch.Tensor): The extrinsic camera parameters.
-    Returns:
-        cam_pts (CameraPoints): The points in the camera space.
-    """
-    # Check the shape of W
-    if W.shape != (3, 4):
-        raise ShapeError(f"project_sfm_to_cam(): Invalid W shape {W.shape}, expected (3,4).")
-    
-    # Carry W tensor to the same device and dtype as sfm_pts
-    W = W.to(
-        dtype=sfm_pts.coords.dtype, 
-        device=sfm_pts.coords.device
-        )
-    
-    # Convert W to the rotation matrix (R) and translational matrix (t)
-    R = W[:3, :3]
-    t = W[:3, 3:].reshape(3, 1)
-
-    # Calculate the points of the coordinates and covariances in the camera space
-    cam_coords = (R @ sfm_coords.T).T + t
-    cam_covariances = R @ sfm_covariances @ R.transpose(-2, -1)
-    
-    return cam_coords, cam_covariances
 

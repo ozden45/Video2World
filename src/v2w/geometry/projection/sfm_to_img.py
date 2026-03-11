@@ -2,8 +2,7 @@ import torch
 from typing import Tuple
 from ..points import SFMPoints, SFMPointsBatched, ImagePoints, ImagePointsBatched
 from .sfm_to_cam import *
-from .cam_to_ray import *
-from .ray_to_img import *
+from .cam_to_img import *
 from ...exception import ShapeError
 
 
