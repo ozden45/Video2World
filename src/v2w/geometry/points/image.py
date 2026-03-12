@@ -15,22 +15,6 @@ class ImagePoint(Point):
 
 
 class ImagePoints(Points):
-    def __post_init__(self, device=None, dtype=None):
-        # Resolve device
-        device = self._resolve_device(device)
-            
-        # Resolve dtype
-        dtype = self._resolve_dtype(dtype)
-        
-        # Check points' shape    
-        self._check_shape()
-        
-        self.coords = self.coords.to(dtype=dtype, device=device)
-        self.covariances = self.covariances.to(dtype=dtype, device=device)
-        self.colors = self.colors.to(dtype=torch.uint8, device=device)
-        self.alphas = self.alphas.to(dtype=dtype, device=device)
-    
-    
     def _check_shape(self):
         return (
             len({self.coords.shape[0], 
@@ -49,7 +33,6 @@ class ImagePoints(Points):
 
             self.alphas.ndim == 2
         )
-    
     
     @classmethod
     def load_from_frame(cls, frame: torch.Tensor) -> ImagePoints:
@@ -91,25 +74,35 @@ class ImagePoints(Points):
     
 
 class ImagePointsBatched(PointsBatched):
-    def __post_init__(self, device=None, dtype=None):
-        # Resolve device
-        device = self._resolve_device(device)
+    def _check_shape(self):
+        return (
+            # Check if num_batch dimensions are equal
+            len({self.coords.shape[0], 
+                 self.covariances.shape[0], 
+                 self.colors.shape[0], 
+                 self.alphas.shape[0]}) == 1 and
             
-        # Resolve dtype
-        dtype = self._resolve_dtype(dtype)
-        
-        self.coords = torch.empty((0, self.num_points, 3),
-                                  dtype=dtype,
-                                  device=device)
-        self.covariances = torch.empty((0, self.num_points, 3, 3),
-                                       dtype=dtype,
-                                       device=device)
-        self.colors = torch.empty((0, self.num_points, 3),
-                                  dtype=dtype,
-                                  device=device)
-        self.alphas = torch.empty((0, self.num_points, 3),
-                                  dtype=dtype,
-                                  device=device)
+            # Check if num_points dimensions are equal
+            len({self.coords.shape[1], 
+                 self.covariances.shape[1], 
+                 self.colors.shape[1], 
+                 self.alphas.shape[1]}) == 1 and
+            
+            # Check coordinates shape
+            self.coords.ndim == 3 and
+            self.coords.shape[-1] == 2 and
+
+            # Check covariances shape
+            self.covariances.ndim == 4 and
+            self.covariances.shape[-2:] == (2,2) and
+            
+            # Check colors shape
+            self.colors.ndim == 3 and
+            self.colors.shape[-1] == 3 and
+
+            # Check alphas shape
+            self.alphas.ndim == 2
+        )
     
     def extract_all_points(self) -> ImagePoints:
         return ImagePoints(

@@ -23,7 +23,9 @@ def project_cam_to_img(cam_pts: CameraPoints, K: torch.Tensor) -> ImagePoints:
     Y = cam_pts.coords[:, 1]
     Z = cam_pts.coords[:, 2]
     
-    J = torch.zeros((N, 2, 3))
+    J = torch.zeros((N, 2, 3),
+                    dtype=cam_pts.coords.dtype,
+                    device=cam_pts.coords.device)
     
     J[:, 0, 0] = K[0, 0] / Z
     J[:, 0, 2] = -K[0, 0] * X / (Z**2)
@@ -32,7 +34,7 @@ def project_cam_to_img(cam_pts: CameraPoints, K: torch.Tensor) -> ImagePoints:
     
     # Project camera points into image space
     img_coords = cam_pts.coords @ K.T
-    img_covariances = J @ cam_pts.covariances @ J.T
+    img_covariances = J @ cam_pts.covariances @ J.transpose(-1,-2)
     
     img_pts = ImagePoints(
         coords=img_coords,
@@ -65,7 +67,9 @@ def project_cam_to_img_batched(cam_batched: CameraPointsBatched, K: torch.Tensor
     Y = cam_batched.coords[:, :, 1]
     Z = cam_batched.coords[:, :, 2]
     
-    J = torch.tensor((B, N, 2, 3))
+    J = torch.zeros((B, N, 2, 3),
+                    dtype=cam_batched.coords.dtype,
+                    device=cam_batched.coords.device)
     
     J[:, :, 0, 0] = K[0, 0] / Z
     J[:, :, 0, 2] = -K[0, 0] * X / (Z**2)
@@ -74,7 +78,7 @@ def project_cam_to_img_batched(cam_batched: CameraPointsBatched, K: torch.Tensor
     
     # Project camera points into image space
     img_coords = cam_batched.coords @ K.T
-    img_covariances = J @ cam_batched.covariances @ J.T
+    img_covariances = J @ cam_batched.covariances @ J.transpose(-1,-2)
     
     img_batched = ImagePointsBatched(
         coords=img_coords,

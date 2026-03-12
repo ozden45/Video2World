@@ -272,3 +272,4 @@ class PointsBatched:
     @property
     def num_batch(self):
         return self._num_batch
+
