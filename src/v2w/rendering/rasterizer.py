@@ -6,11 +6,11 @@ Rasterization-based rendering of 3D points into 2D images.
 
 import torch
 from typing import Tuple
-from v2w.geometry.projection import project_sfm_to_cam_tensor, project_cam_to_ray_tensor, project_ray_to_img_tensor
+from v2w.geometry.projection import *
 from v2w.geometry.camera import Camera
 from v2w.rendering.splat import gaussian_splat
 from v2w.rendering.sh_color import sh_color
-
+from ..geometry.points import *
 
 
 def rasterize(
@@ -35,16 +35,25 @@ def rasterize(
         img (torch.Tensor): The rasterized image of shape (H, W_img, 3).
     """
     
+    sfm_pts = SFMPoints(
+        coords=sfm_coords,
+        covariances=sfm_covs,
+        colors=sfm_colors,
+        alphas=sfm_alphas
+    )
+    
+    
     # Determine the in-range points
-    cam_coords, cam_covs = project_sfm_to_cam_tensor(sfm_coords, sfm_covs, W)
+    cam_pts = project_sfm_to_cam(sfm_pts, W)
+    cam_coords, cam_covs = cam_pts.coords, cam_pts.covariances
     mask = (cam_coords[:, 0] > 0) & (cam_coords[:, 1] > 0) & (cam_coords[:, 2] > 0)
     
     # Mask the in-range points
     cam_coords, cam_covs = cam_coords[mask], cam_covs[mask]
     
     # Project the points to the image space
-    ray_coords, ray_covariances = project_cam_to_ray_tensor(cam_coords, cam_covs)
-    img_coords, img_covs = project_ray_to_img_tensor(ray_coords, ray_covariances, K)
+    img_pts = project_cam_to_img(cam_pts, K)
+    img_coords, img_covs = img_pts.coords, img_pts.covariances
         
     # Calculate the view direction
     view = Camera.extrinsic_to_view(W[:3, :3])

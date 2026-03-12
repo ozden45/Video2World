@@ -1,13 +1,12 @@
-from .base import Point, Points
-from .containers import PointCloud
+from .base import *
+from .containers import *
 
-from .sfm import SFMPoint, SFMPoints, SFMPointsBatched, SFMPointCloud
-from .camera import CameraPoint, CameraPoints, CameraPointsBatched
-from .image import ImagePoint, ImagePoints, ImagePointsBatched
+from .sfm import *
+from .camera import *
+from .image import *
 
 __all__ = [
-    "Point", "Points",
-    "PointCloud",
+    "Point", "Points", "PointCloud",
     
     "SFMPoint", "SFMPoints", "SFMPointsBatched", "SFMPointCloud",
     "CameraPoint", "CameraPoints", "CameraPointsBatched",
