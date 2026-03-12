@@ -11,7 +11,7 @@ def project_cam_to_img(cam_pts: CameraPoints, K: torch.Tensor) -> ImagePoints:
     # Check the shape of K
     if K.shape != (3, 3):
         raise ShapeError(
-            f"project_cam_to_img(): Invalid W shape {K.shape}, expected (3,3)."
+            f"project_cam_to_img(): Invalid K shape {K.shape}, expected (3,3)."
         )
 
     # Match dtype/device
@@ -23,7 +23,7 @@ def project_cam_to_img(cam_pts: CameraPoints, K: torch.Tensor) -> ImagePoints:
     Y = cam_pts.coords[:, 1]
     Z = cam_pts.coords[:, 2]
     
-    J = torch.tensor((N, 2, 3))
+    J = torch.zeros((N, 2, 3))
     
     J[:, 0, 0] = K[0, 0] / Z
     J[:, 0, 2] = -K[0, 0] * X / (Z**2)
@@ -73,14 +73,7 @@ def project_cam_to_img_batched(cam_batched: CameraPointsBatched, K: torch.Tensor
     J[:, :, 1, 2] = -K[1, 1] * Y / (Z**2)
     
     # Project camera points into image space
-    img_coords = torch.einsum('bij,bnj->bni', 
-                              K, 
-                              cam_batched.coords)
-    img_covariances = torch.einsum('bij,bnjk,bkl->bnil', 
-                                   J, 
-                                   cam_batched.covariances, 
-                                   J.transpose(-1,-2))
-    
+    img_coords = cam_batched.coords @ K.T
     img_covariances = J @ cam_batched.covariances @ J.T
     
     img_batched = ImagePointsBatched(

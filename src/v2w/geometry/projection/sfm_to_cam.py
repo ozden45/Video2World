@@ -4,7 +4,7 @@ from ...exception import ShapeError
 
 
 
-def project_sfm_to_cam(sfm_pts: SFMPoints, Rt: torch.Tensor) -> CameraPoints:
+def project_sfm_to_cam(sfm_pts: SFMPoints, W: torch.Tensor) -> CameraPoints:
     """
     Projects SfM points from world to camera space.
 
@@ -17,17 +17,17 @@ def project_sfm_to_cam(sfm_pts: SFMPoints, Rt: torch.Tensor) -> CameraPoints:
     """
 
     # Check the shape of W
-    if Rt.shape != (3, 4):
+    if W.shape != (3, 4):
         raise ShapeError(
-            f"project_sfm_to_cam(): Invalid W shape {Rt.shape}, expected (3,4)."
+            f"project_sfm_to_cam(): Invalid W shape {W.shape}, expected (3,4)."
         )
 
     # Match dtype and device
-    Rt = Rt.to(dtype=sfm_pts.coords.dtype, device=sfm_pts.coords.device)
+    W = W.to(dtype=sfm_pts.coords.dtype, device=sfm_pts.coords.device)
 
     # Extract rotation and translation
-    R = Rt[:, :3]
-    t = Rt[:, 3]
+    R = W[:, :3]
+    t = W[:, 3]
 
     cam_coords = sfm_pts.coords @ R.T + t
     cam_covariances = R @ sfm_pts.covariances @ R.T
@@ -44,7 +44,7 @@ def project_sfm_to_cam(sfm_pts: SFMPoints, Rt: torch.Tensor) -> CameraPoints:
 
 
 
-def project_sfm_to_cam_batched(sfm_batched: SFMPointsBatched, Rt_batched: torch.Tensor) -> CameraPointsBatched:
+def project_sfm_to_cam_batched(sfm_batched: SFMPointsBatched, W_batched: torch.Tensor) -> CameraPointsBatched:
     """
     Projects SfM points from world to camera space for multiple cameras.
 
@@ -58,19 +58,19 @@ def project_sfm_to_cam_batched(sfm_batched: SFMPointsBatched, Rt_batched: torch.
             covariances: (B,N,3,3)
     """
 
-    if Rt_batched.ndim != 3 or Rt_batched.shape[1:] != (3, 4):
+    if W_batched.ndim != 3 or W_batched.shape[1:] != (3, 4):
         raise ShapeError(
-            f"project_sfm_to_cam_batched(): Invalid Rt_batched shape {Rt_batched.shape}, expected (B,3,4)."
+            f"project_sfm_to_cam_batched(): Invalid W_batched shape {W_batched.shape}, expected (B,3,4)."
         )
 
     # Match dtype and device
-    Rt_batched = Rt_batched.to(
+    W_batched = W_batched.to(
         dtype=sfm_batched.coords.dtype, 
         device=sfm_batched.coords.device
     )
 
-    R = Rt_batched[:, :, :3]
-    t = Rt_batched[:, :, 3]
+    R = W_batched[:, :, :3]
+    t = W_batched[:, :, 3]
 
     # Project world points into camera space
     cam_coords = torch.einsum('bij,bnj->bni', 
