@@ -1,6 +1,6 @@
 # Video2World
 
-> A modular research framework for reconstructing 3D world representations from video.
+> Video2World is a modular 3D reconstruction framework that converts monocular videos into navigable 3D scenes through a modern visual SLAM pipeline. The project is designed with extensibility in mind, allowing different feature extractors, camera pose estimators, mapping strategies, and optimization modules to be integrated independently.
 
 Video2World provides a clean and extensible codebase for:
 - camera geometry
